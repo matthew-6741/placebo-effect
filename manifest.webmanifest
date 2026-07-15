@@ -1,0 +1,26 @@
+{
+  "name": "Phantom — order the dopamine, skip the delivery",
+  "short_name": "Phantom",
+  "description": "A placebo novelty app: place food/ride/travel orders that never arrive, just for the dopamine. Entertainment only.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0e0f1a",
+  "theme_color": "#7c5cff",
+  "categories": ["entertainment", "lifestyle"],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

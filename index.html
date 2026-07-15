@@ -1,0 +1,1864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Phantom — order the dopamine, skip the delivery</title>
+<!-- Google Identity Services (only used if you set GOOGLE_CLIENT_ID in the script below) -->
+<script src="https://accounts.google.com/gsi/client" async></script>
+<!-- PWA / installable + offline (helps clear "minimum functionality" review) -->
+<link rel="manifest" href="manifest.webmanifest" />
+<meta name="theme-color" content="#0e0f1a" />
+<link rel="icon" type="image/png" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/icon-180.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Phantom" />
+<style>
+  :root {
+    --bg: #0e0f1a;
+    --bg2: #15172a;
+    --card: #1c1f36;
+    --card2: #232745;
+    --line: #2c3056;
+    --text: #eef0ff;
+    --muted: #9aa0c7;
+    --accent: #7c5cff;
+    --accent2: #00d6a4;
+    --warn: #ff8c5a;
+    --danger: #ff5c7c;
+    --shadow: 0 18px 50px rgba(0,0,0,.45);
+    --r: 18px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: radial-gradient(1200px 700px at 80% -10%, #221b4a 0%, transparent 60%),
+                radial-gradient(900px 600px at -10% 10%, #10324a 0%, transparent 55%),
+                var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 22px 18px 80px; }
+
+  /* Header */
+  header.app {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; margin-bottom: 18px;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .logo {
+    width: 44px; height: 44px; border-radius: 13px;
+    background: linear-gradient(135deg, var(--accent), #b463ff);
+    display: grid; place-items: center; font-size: 24px;
+    box-shadow: 0 8px 22px rgba(124,92,255,.5);
+  }
+  .brand h1 { font-size: 20px; margin: 0; letter-spacing: .2px; }
+  .brand p { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
+  .ghost-counter {
+    text-align: right; font-size: 12px; color: var(--muted); line-height: 1.5;
+  }
+  .ghost-counter b { color: var(--accent2); font-size: 15px; }
+
+  /* Tabs */
+  .tabs {
+    display: flex; gap: 6px; background: var(--bg2);
+    border: 1px solid var(--line); border-radius: 999px; padding: 5px;
+    width: fit-content; margin: 0 auto 22px;
+  }
+  .tabs button {
+    border: 0; background: transparent; color: var(--muted);
+    padding: 10px 22px; border-radius: 999px; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: .2s; font-family: inherit;
+  }
+  .tabs button.active { background: var(--accent); color: #fff; box-shadow: 0 6px 16px rgba(124,92,255,.45); }
+
+  .view { display: none; animation: fade .35s ease; }
+  .view.active { display: block; }
+  @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  .section-title { font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; margin: 4px 2px 12px; }
+
+  /* Food grid */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px,1fr)); gap: 16px; }
+  .dish {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--r);
+    padding: 0; cursor: pointer; transition: .18s; position: relative; overflow: hidden;
+  }
+  .dish:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: var(--shadow); }
+  .dish:active { transform: scale(.97); }
+  .dish-photo { position: relative; height: 185px; display: grid; place-items: center; background: linear-gradient(135deg, var(--card2), var(--bg2)); }
+  .dish-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .25s; }
+  .dish:hover .dish-photo img { transform: scale(1.05); }
+  .dish-emoji { font-size: 46px; line-height: 1; opacity: .85; }
+  .dish-body { padding: 13px 15px 15px; }
+  .dish .name { font-weight: 700; margin: 0 0 2px; font-size: 15px; }
+  .dish .desc { font-size: 12px; color: var(--muted); min-height: 32px; }
+  .dish .row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+  .dish .price { font-weight: 800; color: var(--accent2); }
+  .dish .add { font-size: 12px; color: var(--accent); font-weight: 700; }
+
+  /* Cart bar */
+  .cartbar {
+    position: sticky; bottom: 16px; margin-top: 20px;
+    background: linear-gradient(135deg, var(--accent), #9b5cff);
+    border-radius: 16px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 14px 34px rgba(124,92,255,.5); cursor: pointer; transition: .2s;
+    opacity: 0; transform: translateY(20px); pointer-events: none;
+  }
+  .cartbar.show { opacity: 1; transform: none; pointer-events: auto; }
+  .cartbar:hover { filter: brightness(1.06); }
+  .cartbar .left { font-weight: 700; }
+  .cartbar .left small { display:block; font-weight: 500; opacity: .85; font-size: 11px; }
+  .cartbar .right { font-weight: 800; font-size: 16px; }
+
+  /* Ride form */
+  .panel {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--r);
+    padding: 18px; box-shadow: var(--shadow);
+  }
+  .field { margin-bottom: 14px; }
+  .field label { display:block; font-size: 12px; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .8px; }
+  .field input {
+    width: 100%; background: var(--bg2); border: 1px solid var(--line); color: var(--text);
+    padding: 13px 14px; border-radius: 12px; font-size: 15px; font-family: inherit; outline: none; transition: .15s;
+  }
+  .field input:focus { border-color: var(--accent); }
+  .ride-types { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 16px; }
+  .rt {
+    background: var(--bg2); border: 1.5px solid var(--line); border-radius: 14px; padding: 10px 10px 12px;
+    text-align: center; cursor: pointer; transition: .15s;
+  }
+  .rt:hover { border-color: var(--accent); }
+  .rt.sel { border-color: var(--accent); background: rgba(124,92,255,.14); }
+  .rt-photo { position: relative; height: 56px; border-radius: 9px; overflow: hidden; margin-bottom: 8px; display: grid; place-items: center; background: linear-gradient(135deg, var(--card2), var(--card)); }
+  .rt-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .rt .ic { font-size: 28px; }
+  .rt .t { font-weight: 700; font-size: 14px; margin-top: 4px; }
+  .rt .p { font-size: 12px; color: var(--accent2); font-weight: 700; }
+
+  .btn {
+    width: 100%; border: 0; border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 800;
+    cursor: pointer; font-family: inherit; color: #fff;
+    background: linear-gradient(135deg, var(--accent), #9b5cff);
+    box-shadow: 0 10px 26px rgba(124,92,255,.45); transition: .15s;
+  }
+  .btn:hover { filter: brightness(1.07); }
+  .btn:active { transform: scale(.98); }
+  .btn.ghost { background: transparent; border: 1.5px solid var(--line); color: var(--muted); box-shadow: none; }
+
+  /* Tracking modal */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(6,7,16,.78); backdrop-filter: blur(6px);
+    display: none; align-items: center; justify-content: center; padding: 18px; z-index: 50;
+  }
+  .overlay.show { display: flex; animation: fade .25s; }
+  .track {
+    background: var(--card2); border: 1px solid var(--line); border-radius: 22px; padding: 24px;
+    width: 100%; max-width: 440px; box-shadow: var(--shadow);
+  }
+  .track h2 { margin: 0 0 4px; font-size: 20px; }
+  .track .sub { color: var(--muted); font-size: 13px; margin-bottom: 18px; }
+
+  .eta-big { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.2px; }
+  .eta-num { font-size: 46px; font-weight: 900; margin: 2px 0 14px; transition: color .3s; }
+  .eta-num span { font-size: 18px; color: var(--muted); font-weight: 600; }
+
+  .progress { height: 10px; background: var(--bg2); border-radius: 999px; overflow: hidden; margin-bottom: 8px; }
+  .progress > div {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    border-radius: 999px; transition: width .8s cubic-bezier(.4,0,.2,1);
+  }
+  .status { font-size: 14px; min-height: 40px; margin: 12px 0 2px; line-height: 1.4; }
+  .status .pulse { display:inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent2); margin-right: 8px; animation: blink 1s infinite; }
+  @keyframes blink { 50% { opacity: .25; } }
+
+  /* Map for ride */
+  .map {
+    position: relative; height: 180px; background:
+      linear-gradient(var(--line) 1px, transparent 1px) 0 0 / 28px 28px,
+      linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0 / 28px 28px,
+      var(--bg2);
+    border-radius: 16px; overflow: hidden; margin-bottom: 16px; border: 1px solid var(--line);
+  }
+  .road { position: absolute; left: 8%; right: 8%; top: 50%; height: 6px; background: #3a3f6e; border-radius: 4px; transform: translateY(-50%); }
+  .pin { position: absolute; top: 50%; transform: translate(-50%,-50%); font-size: 24px; }
+  .pin.dest { right: 8%; }
+  .car { position: absolute; top: 50%; left: 10%; transform: translate(-50%,-60%); font-size: 30px; transition: left 1s linear; }
+
+  .waitnote { text-align: center; font-size: 12px; color: var(--muted); margin-top: 14px; }
+  .ghosted-banner {
+    background: rgba(255,92,124,.12); border: 1px solid rgba(255,92,124,.4); color: #ff9bb0;
+    border-radius: 12px; padding: 12px 14px; font-size: 13px; text-align: center; margin: 4px 0 14px; display: none;
+  }
+  .ghosted-banner.show { display: block; animation: shake .5s; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+
+  .confetti { position: fixed; top: -10px; font-size: 18px; pointer-events: none; z-index: 60; animation: fall linear forwards; }
+  @keyframes fall { to { transform: translateY(105vh) rotate(540deg); opacity: 0; } }
+
+  /* Wallet */
+  .cardprev-wrap { perspective: 1000px; margin-bottom: 18px; display: flex; justify-content: center; }
+  .cardprev { width: 340px; max-width: 100%; height: 200px; position: relative; transform-style: preserve-3d; transition: transform .6s; }
+  .cardprev.flip { transform: rotateY(180deg); }
+  .cface { position: absolute; inset: 0; border-radius: 18px; padding: 20px; backface-visibility: hidden; box-shadow: var(--shadow); color: #fff; overflow: hidden; }
+  .cface.front { background: linear-gradient(135deg, #3a2d7a, #7c5cff 58%, #b463ff); }
+  .cface.back { background: linear-gradient(135deg, #241f47, #3a2d7a); transform: rotateY(180deg); }
+  .cbrand { position: absolute; top: 18px; right: 20px; font-weight: 800; letter-spacing: 1px; font-style: italic; font-size: 17px; }
+  .cchip { width: 42px; height: 32px; border-radius: 7px; background: linear-gradient(135deg, #e9d9a0, #c9a84a); margin-top: 24px; position: relative; }
+  .cchip::after { content: ""; position: absolute; inset: 6px; border: 1px solid rgba(0,0,0,.25); border-radius: 4px; }
+  .cnum { font-size: 21px; letter-spacing: 2px; margin: 18px 0 18px; font-family: "SF Mono", ui-monospace, Menlo, monospace; }
+  .crow { display: flex; justify-content: space-between; font-size: 13px; text-transform: uppercase; letter-spacing: .5px; }
+  .clabel { font-size: 9px; opacity: .6; margin-bottom: 3px; letter-spacing: 1px; }
+  .cstripe { height: 38px; background: #0c0c1a; margin: 14px -20px 0; }
+  .ccvc { text-align: right; margin-top: 22px; }
+  .ccvc span { background: #fff; color: #111; padding: 5px 12px; border-radius: 5px; font-family: monospace; letter-spacing: 2px; }
+  .cback-note { font-size: 10px; opacity: .55; margin-top: 22px; }
+
+  .seg { display: flex; background: var(--bg2); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; width: fit-content; margin-bottom: 16px; }
+  .seg button { border: 0; background: transparent; color: var(--muted); padding: 9px 22px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 13px; transition: .15s; }
+  .seg button.sel { background: var(--accent); color: #fff; }
+  .or { text-align: center; color: var(--muted); font-size: 12px; margin: 12px 0; }
+  .disclaimer { font-size: 11px; color: var(--muted); margin-top: 14px; line-height: 1.55; background: var(--bg2); border: 1px solid var(--line); border-radius: 10px; padding: 11px 13px; }
+
+  .wmethod { display: flex; align-items: center; gap: 14px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; }
+  .wmethod .wic { font-size: 24px; display: grid; place-items: center; width: 30px; }
+  .wmethod .wmain { flex: 1; }
+  .wmethod .wt { font-weight: 700; }
+  .wmethod .ws { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .wmethod .wdef { font-size: 11px; color: var(--accent2); font-weight: 700; border: 1px solid rgba(0,214,164,.4); border-radius: 999px; padding: 4px 11px; cursor: pointer; }
+  .wmethod .wdel { color: var(--danger); cursor: pointer; font-size: 16px; background: none; border: 0; padding: 4px 6px; }
+  .empty { color: var(--muted); font-size: 13px; text-align: center; padding: 20px; border: 1px dashed var(--line); border-radius: 14px; }
+
+  .paychip { font-size: 12.5px; background: var(--bg2); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; margin-bottom: 16px; }
+  .paychip .muted2 { color: var(--muted); }
+  .paychip a { color: var(--accent); font-weight: 600; }
+
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translate(-50%, 20px); background: var(--card2); border: 1px solid var(--line); color: var(--text); padding: 12px 18px; border-radius: 12px; font-size: 13px; box-shadow: var(--shadow); opacity: 0; transition: .3s; z-index: 70; }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  /* Squad / tier list */
+  .me-row { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+  .avatar { width: 54px; height: 54px; border-radius: 50%; background: var(--bg2); border: 1px solid var(--line); display: grid; place-items: center; font-size: 28px; cursor: pointer; user-select: none; transition: .15s; }
+  .avatar:hover { border-color: var(--accent); transform: scale(1.05); }
+  .me-main { flex: 1; min-width: 0; }
+  #meName { background: transparent; border: 0; border-bottom: 1px solid var(--line); color: var(--text); font-size: 18px; font-weight: 700; font-family: inherit; padding: 2px 0; outline: none; width: 100%; }
+  #meName:focus { border-color: var(--accent); }
+  .me-sub { font-size: 12px; color: var(--muted); margin-top: 7px; }
+  .me-sub b { color: var(--text); letter-spacing: .5px; }
+  .copybtn { background: var(--bg2); border: 1px solid var(--line); color: var(--accent); border-radius: 6px; font-size: 11px; padding: 3px 9px; cursor: pointer; margin-left: 8px; font-family: inherit; }
+  .copybtn:hover { border-color: var(--accent); }
+  .addfriend { display: flex; gap: 8px; margin-bottom: 12px; }
+  .addfriend input { flex: 1; min-width: 0; background: var(--bg2); border: 1px solid var(--line); color: var(--text); padding: 11px 13px; border-radius: 11px; font-size: 14px; font-family: inherit; outline: none; }
+  .addfriend input:focus { border-color: var(--accent); }
+  .btn.small { width: auto; padding: 11px 22px; font-size: 14px; }
+  .squad-note { font-size: 11px; color: var(--muted); line-height: 1.55; background: var(--bg2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+
+  .tier { display: flex; align-items: stretch; border-radius: 12px; overflow: hidden; margin-bottom: 8px; background: var(--card); border: 1px solid var(--line); }
+  .tier-label { width: 88px; flex: none; display: grid; place-items: center; font-weight: 900; font-size: 24px; color: #14151f; text-align: center; line-height: 1; }
+  .tier-label small { display: block; font-size: 8.5px; font-weight: 800; line-height: 1.15; margin-top: 4px; text-transform: uppercase; letter-spacing: .3px; }
+  .tier-S .tier-label { background: linear-gradient(135deg, #ff8a8a, #ff4d6d); }
+  .tier-A .tier-label { background: linear-gradient(135deg, #ffb15c, #ff8c42); }
+  .tier-B .tier-label { background: linear-gradient(135deg, #ffe066, #ffd43b); }
+  .tier-C .tier-label { background: linear-gradient(135deg, #7be0c0, #34d399); }
+  .tier-D .tier-label { background: linear-gradient(135deg, #aab0d4, #7b82ad); }
+  .tier-members { flex: 1; display: flex; flex-wrap: wrap; gap: 8px; padding: 10px; min-height: 66px; align-content: center; }
+  .member { display: flex; align-items: center; gap: 9px; background: var(--bg2); border: 1px solid var(--line); border-radius: 11px; padding: 6px 10px 6px 10px; position: relative; }
+  .member.you { border-color: var(--accent); background: rgba(124,92,255,.16); box-shadow: 0 0 0 1px var(--accent) inset; }
+  .member .av { font-size: 20px; }
+  .member .mn { font-weight: 700; font-size: 13px; line-height: 1.1; }
+  .member .ms { font-size: 11px; color: var(--accent2); margin-top: 1px; }
+  .member .crown { position: absolute; top: -10px; left: -7px; font-size: 16px; transform: rotate(-20deg); }
+  .member .rm { background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 12px; padding: 2px 0 2px 4px; }
+  .member .rm:hover { color: var(--danger); }
+  .tier-empty { color: var(--muted); font-size: 12px; opacity: .55; padding: 4px 6px; }
+
+  /* Travel / map */
+  .map-panel { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 10px; box-shadow: var(--shadow); margin-bottom: 16px; }
+  .worldmap { width: 100%; height: auto; display: block; border-radius: 12px;
+    background: radial-gradient(700px 360px at 50% 42%, rgba(124,92,255,.10), transparent 70%), var(--bg2); }
+  .mgrid line { stroke: var(--line); stroke-width: 1; opacity: .45; }
+  .mland path { fill: #2a2f55; opacity: .6; stroke: #3c4374; stroke-width: 1; }
+  .farc { fill: none; stroke: url(#arcGrad); stroke-width: 2.5; stroke-dasharray: 6 6; animation: dash 1s linear infinite; }
+  @keyframes dash { to { stroke-dashoffset: -12; } }
+  .origin circle { fill: var(--accent2); }
+  .origin .olabel { fill: var(--muted); font-size: 12px; font-weight: 700; }
+  .destpin .dp { fill: var(--card2); stroke: var(--line); stroke-width: 1.5; transition: .15s; }
+  .destpin:hover .dp { stroke: var(--accent); }
+  .destpin.sel .dp { fill: var(--accent); stroke: #fff; stroke-width: 2; }
+  .destpin .dl { fill: var(--muted); font-weight: 700; }
+  .destpin.sel .dl { fill: var(--text); }
+
+  .dest-row { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 16px; }
+  .destcard { flex: none; width: 156px; background: var(--card); border: 1.5px solid var(--line); border-radius: 14px; padding: 0; overflow: hidden; cursor: pointer; transition: .15s; }
+  .destcard:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .destcard.sel { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+  .destcard-photo { position: relative; height: 92px; display: grid; place-items: center; background: linear-gradient(135deg, var(--card2), var(--bg2)); }
+  .destcard-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .destcard .dce { font-size: 30px; line-height: 1; position: relative; }
+  .destcard-body { padding: 11px 13px 13px; }
+  .destcard .dcc { font-weight: 700; }
+  .destcard .dch { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .destcard .dcp { font-weight: 800; color: var(--accent2); margin-top: 8px; }
+
+  .bpass { display: flex; background: linear-gradient(135deg, var(--card2), var(--card)); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); }
+  .bp-main { flex: 1; padding: 18px 20px; min-width: 0; }
+  .bp-route { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .bp-end { text-align: center; }
+  .bp-code { font-size: 26px; font-weight: 900; letter-spacing: 1px; }
+  .bp-city { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .bp-mid { color: var(--accent); font-size: 18px; text-align: center; }
+  .bp-dur { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .bp-meta { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 16px; font-size: 11px; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 12px; }
+  .bp-stub { width: 152px; flex: none; border-left: 2px dashed var(--line); padding: 16px; display: flex; flex-direction: column; justify-content: center; gap: 12px; background: var(--bg2); }
+  .bp-price { font-size: 22px; font-weight: 900; color: var(--accent2); text-align: center; }
+  .bp-stub .btn { padding: 12px; font-size: 14px; }
+
+  /* Google Calendar connect chip */
+  .gcal-btn { background: var(--bg2); border: 1px solid var(--line); color: var(--accent); border-radius: 999px; padding: 5px 11px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: inherit; margin-bottom: 6px; transition: .15s; }
+  .gcal-btn:hover { border-color: var(--accent); }
+  .gcal-btn.on { background: rgba(0,214,164,.14); border-color: var(--accent2); color: var(--accent2); }
+
+  /* Market + cuisine nav */
+  .market-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .market-toggle { display: flex; gap: 6px; background: var(--bg2); border: 1px solid var(--line); border-radius: 999px; padding: 5px; }
+  .market-toggle button { border: 0; background: transparent; color: var(--muted); padding: 9px 20px; border-radius: 999px; font-weight: 700; font-size: 14px; cursor: pointer; font-family: inherit; transition: .15s; }
+  .market-toggle button.sel { background: var(--accent); color: #fff; box-shadow: 0 6px 16px rgba(124,92,255,.4); }
+  .market-info { font-size: 12px; color: var(--muted); }
+  .market-info b { color: var(--text); }
+  .cat-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 8px; }
+  .cat { flex: none; border: 1px solid var(--line); background: var(--bg2); color: var(--muted); border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; transition: .15s; }
+  .cat:hover { border-color: var(--accent); color: var(--text); }
+  .cat.sel { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .region-header { font-size: 13px; text-transform: uppercase; letter-spacing: 2px; color: var(--accent); font-weight: 800; margin: 28px 2px 4px; padding-bottom: 9px; border-bottom: 1px solid var(--line); }
+  .region-header:first-child { margin-top: 4px; }
+  .cuisine-title { font-size: 15px; font-weight: 700; margin: 16px 2px 10px; display: flex; align-items: center; gap: 8px; color: var(--text); }
+
+  /* Phantom receipt (thermal paper) */
+  .receipt-wrap { max-width: 360px; width: 100%; max-height: 90vh; overflow-y: auto; }
+  .receipt {
+    background: #faf7ef; color: #2a2721; font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+    font-size: 12px; line-height: 1.55; padding: 26px 22px; position: relative;
+    box-shadow: 0 20px 50px rgba(0,0,0,.6); margin: 14px 0 12px;
+    -webkit-clip-path: polygon(0 8px, 3% 0, 6% 8px, 9% 0, 12% 8px, 15% 0, 18% 8px, 21% 0, 24% 8px, 27% 0, 30% 8px, 33% 0, 36% 8px, 39% 0, 42% 8px, 45% 0, 48% 8px, 51% 0, 54% 8px, 57% 0, 60% 8px, 63% 0, 66% 8px, 69% 0, 72% 8px, 75% 0, 78% 8px, 81% 0, 84% 8px, 87% 0, 90% 8px, 93% 0, 96% 8px, 100% 0, 100% calc(100% - 8px), 96% 100%, 93% calc(100% - 8px), 90% 100%, 87% calc(100% - 8px), 84% 100%, 81% calc(100% - 8px), 78% 100%, 75% calc(100% - 8px), 72% 100%, 69% calc(100% - 8px), 66% 100%, 63% calc(100% - 8px), 60% 100%, 57% calc(100% - 8px), 54% 100%, 51% calc(100% - 8px), 48% 100%, 45% calc(100% - 8px), 42% 100%, 39% calc(100% - 8px), 36% 100%, 33% calc(100% - 8px), 30% 100%, 27% calc(100% - 8px), 24% 100%, 21% calc(100% - 8px), 18% 100%, 15% calc(100% - 8px), 12% 100%, 9% calc(100% - 8px), 6% 100%, 3% calc(100% - 8px), 0 100%);
+    clip-path: polygon(0 8px, 3% 0, 6% 8px, 9% 0, 12% 8px, 15% 0, 18% 8px, 21% 0, 24% 8px, 27% 0, 30% 8px, 33% 0, 36% 8px, 39% 0, 42% 8px, 45% 0, 48% 8px, 51% 0, 54% 8px, 57% 0, 60% 8px, 63% 0, 66% 8px, 69% 0, 72% 8px, 75% 0, 78% 8px, 81% 0, 84% 8px, 87% 0, 90% 8px, 93% 0, 96% 8px, 100% 0, 100% calc(100% - 8px), 96% 100%, 93% calc(100% - 8px), 90% 100%, 87% calc(100% - 8px), 84% 100%, 81% calc(100% - 8px), 78% 100%, 75% calc(100% - 8px), 72% 100%, 69% calc(100% - 8px), 66% 100%, 63% calc(100% - 8px), 60% 100%, 57% calc(100% - 8px), 54% 100%, 51% calc(100% - 8px), 48% 100%, 45% calc(100% - 8px), 42% 100%, 39% calc(100% - 8px), 36% 100%, 33% calc(100% - 8px), 30% 100%, 27% calc(100% - 8px), 24% 100%, 21% calc(100% - 8px), 18% 100%, 15% calc(100% - 8px), 12% 100%, 9% calc(100% - 8px), 6% 100%, 3% calc(100% - 8px), 0 100%);
+  }
+  .receipt .r-center { text-align: center; }
+  .receipt .r-logo { font-size: 30px; line-height: 1; }
+  .receipt .r-title { font-weight: 800; font-size: 15px; letter-spacing: 2px; margin-top: 4px; }
+  .receipt .r-sub { font-size: 10px; color: #6b6459; }
+  .receipt .r-dash { border-top: 1.5px dashed #b8b0a2; margin: 10px 0; }
+  .receipt .r-row { display: flex; justify-content: space-between; gap: 10px; }
+  .receipt .r-row .r-name { flex: 1; }
+  .receipt .r-cuisine { font-size: 9.5px; color: #8a8172; margin: -2px 0 4px 14px; }
+  .receipt .r-total { font-weight: 800; font-size: 14px; }
+  .receipt .r-strike { text-decoration: line-through; color: #8a8172; }
+  .receipt .r-free { color: #1a7f4e; font-weight: 800; }
+  .receipt .r-passport { margin-top: 4px; }
+  .receipt .r-passport-title { font-weight: 800; letter-spacing: 1.5px; font-size: 10.5px; text-align: center; }
+  .receipt .r-stamps { display: flex; flex-wrap: wrap; gap: 4px 8px; justify-content: center; margin: 7px 0 2px; font-size: 10.5px; }
+  .receipt .r-stamps span { border: 1.2px solid #2a2721; border-radius: 999px; padding: 2px 8px; }
+  .receipt .r-stamps span.new { background: #2a2721; color: #faf7ef; }
+  .receipt .r-progress { text-align: center; font-size: 10px; color: #6b6459; margin-top: 5px; }
+  .receipt .r-barcode { height: 34px; margin: 12px 8px 4px; background: repeating-linear-gradient(90deg, #2a2721 0 2px, transparent 2px 4px, #2a2721 4px 7px, transparent 7px 9px, #2a2721 9px 10px, transparent 10px 14px); }
+  .receipt .r-barcode-label { text-align: center; font-size: 9px; letter-spacing: 3px; color: #6b6459; }
+  .receipt-close { width: 100%; }
+
+  /* Login */
+  .login-code { font-size: 40px; font-weight: 900; letter-spacing: 10px; color: var(--accent2); margin: 6px 0 12px; }
+
+  /* Delivery speed chips */
+  .speed-row { display: flex; align-items: center; gap: 6px; margin: 10px 0 2px; flex-wrap: wrap; }
+  .spd-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted); margin-right: 2px; }
+  .spd { border: 1px solid var(--line); background: var(--bg2); color: var(--muted); border-radius: 999px; padding: 5px 11px; font-size: 11.5px; font-weight: 700; cursor: pointer; font-family: inherit; transition: .15s; }
+  .spd:hover { border-color: var(--accent); color: var(--text); }
+  .spd.sel { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* Pop-up ads (placeholder slots) */
+  .ad-pop {
+    position: fixed; right: 16px; bottom: 86px; width: 262px; z-index: 40;
+    background: var(--card2); border: 1px solid var(--line); border-radius: 14px;
+    box-shadow: var(--shadow); padding: 13px 14px; transform: translateY(20px); opacity: 0;
+    transition: .35s cubic-bezier(.2,.9,.3,1.2);
+  }
+  .ad-pop.show { transform: none; opacity: 1; }
+  .ad-pop .ad-badge { position: absolute; top: -8px; left: 12px; background: var(--warn); color: #14151f; font-size: 9px; font-weight: 900; letter-spacing: 1px; border-radius: 5px; padding: 2px 7px; }
+  .ad-pop .ad-x { position: absolute; top: 6px; right: 8px; background: none; border: 0; color: var(--muted); font-size: 14px; cursor: pointer; padding: 2px 5px; }
+  .ad-pop .ad-x:hover { color: var(--danger); }
+  .ad-pop .ad-body { display: flex; gap: 11px; align-items: center; }
+  .ad-pop .ad-emoji { font-size: 34px; line-height: 1; }
+  .ad-pop .ad-title { font-weight: 800; font-size: 13.5px; }
+  .ad-pop .ad-line { font-size: 11px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+  .ad-pop .ad-cta { margin-top: 10px; width: 100%; border: 0; border-radius: 9px; padding: 8px; font-size: 12px; font-weight: 800; cursor: pointer; font-family: inherit; color: #fff; background: linear-gradient(135deg, var(--accent), #9b5cff); }
+  .ad-pop .ad-cta:hover { filter: brightness(1.08); }
+
+  footer { text-align:center; color: var(--muted); font-size: 11px; margin-top: 34px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="app">
+    <div class="brand">
+      <div class="logo">👻</div>
+      <div>
+        <h1>Phantom</h1>
+        <p>order the dopamine — skip the delivery</p>
+      </div>
+    </div>
+    <div class="ghost-counter">
+      <button id="acctChip" class="gcal-btn" style="display:none" title="tap twice to sign out"></button>
+      <button id="gcalBtn" class="gcal-btn">🗓️ Connect Calendar</button>
+      <div><b id="ghostCount">0</b> times ghosted</div>
+      <div><b id="savedAmt">$0</b> saved &amp; <b id="savedCal">0</b> cal dodged</div>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="active" data-tab="eats">🍔 Phantom Eats</button>
+    <button data-tab="ride">🚗 Phantom Ride</button>
+    <button data-tab="wallet">💳 Wallet</button>
+    <button data-tab="squad">🏆 Squad</button>
+    <button data-tab="travel">🌍 Travel</button>
+  </div>
+
+  <!-- EATS -->
+  <section class="view active" id="eats">
+    <div class="market-bar">
+      <div class="market-toggle">
+        <button data-market="NYC">🗽 NYC</button>
+        <button data-market="LA">🌴 LA</button>
+      </div>
+      <div class="market-info" id="marketInfo"></div>
+    </div>
+    <div class="cat-row" id="catRow"></div>
+    <div id="menuSections"></div>
+    <div class="cartbar" id="cartbar">
+      <div class="left"><span id="cartCount">0 items</span><small>tap to place your phantom order</small></div>
+      <div class="right" id="cartTotal">$0.00</div>
+    </div>
+  </section>
+
+  <!-- RIDE -->
+  <section class="view" id="ride">
+    <div class="section-title">Where to (not)?</div>
+    <div class="panel">
+      <div class="field">
+        <label>Pickup</label>
+        <input id="from" value="Your couch" />
+      </div>
+      <div class="field">
+        <label>Destination</label>
+        <input id="to" placeholder="Anywhere but here" value="The function" />
+      </div>
+      <div class="ride-types" id="rideTypes"></div>
+      <button class="btn" id="requestRide">Request Phantom Ride</button>
+    </div>
+  </section>
+
+  <!-- WALLET -->
+  <section class="view" id="wallet">
+    <div class="section-title">Phantom Wallet — play money only, never real cards</div>
+
+    <div class="cardprev-wrap">
+      <div class="cardprev" id="cardPrev" title="tap to flip">
+        <div class="cface front">
+          <div class="cbrand" id="pvBrand">PHANTOM</div>
+          <div class="cchip"></div>
+          <div class="cnum" id="pvNum">•••• •••• •••• ••••</div>
+          <div class="crow">
+            <div><div class="clabel">Card holder</div><div id="pvName">YOUR NAME</div></div>
+            <div><div class="clabel">Expires</div><div id="pvExp">∞ / ∞</div></div>
+          </div>
+        </div>
+        <div class="cface back">
+          <div class="cstripe"></div>
+          <div class="ccvc">DEMO&nbsp;<span id="pvCvc">•••</span></div>
+          <div class="cback-note">Not a real card · no card number is ever entered or stored</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="field">
+        <label>Name on card (optional)</label>
+        <input id="ccName" autocomplete="off" maxlength="22" placeholder="Your name" />
+      </div>
+      <div class="seg" id="brandSeg">
+        <button class="sel" data-brand="Visa">Visa</button>
+        <button data-brand="Mastercard">Mastercard</button>
+        <button data-brand="Amex">Amex</button>
+      </div>
+      <button class="btn" id="mintCard">✨ Mint an Imaginary Card</button>
+      <div class="disclaimer">🔒 This is a <b>novelty wallet</b>. Phantom never asks for a real card number, CVC, or bank details, connects to no payment network, and charges nothing — ever. Every card here is randomly generated and fake.</div>
+    </div>
+
+    <div class="section-title" style="margin-top:22px">Saved phantom cards</div>
+    <div id="walletList"></div>
+  </section>
+
+  <!-- SQUAD -->
+  <section class="view" id="squad">
+    <div class="section-title">Phantom Squad — who ghost-orders the most</div>
+
+    <div class="panel">
+      <div class="me-row">
+        <div class="avatar" id="meAvatar" title="tap to change">😎</div>
+        <div class="me-main">
+          <input id="meName" maxlength="18" placeholder="Your name" />
+          <div class="me-sub">Invite code <b id="inviteCode">PHANTOM-••••</b><button class="copybtn" id="copyInvite">copy</button></div>
+        </div>
+      </div>
+      <div class="addfriend">
+        <input id="friendName" placeholder="Add a friend by name…" maxlength="18" />
+        <button class="btn small" id="addFriend">Connect</button>
+      </div>
+      <div class="squad-note">📡 Phantom never goes online, so your squad is made of phantoms too — they ghost-order on their own, even while you're away. Out-spend them by placing more (free, fake) orders.</div>
+    </div>
+
+    <div class="section-title" style="margin-top:22px">The Ghost-Spender tier list</div>
+    <div class="tierlist" id="tierlist"></div>
+  </section>
+
+  <!-- TRAVEL -->
+  <section class="view" id="travel">
+    <div class="section-title">Phantom Travel — book the getaway, skip the airport</div>
+
+    <div class="map-panel">
+      <svg viewBox="0 0 1000 460" class="worldmap" id="worldmap" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <linearGradient id="arcGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#00d6a4" />
+            <stop offset="1" stop-color="#7c5cff" />
+          </linearGradient>
+        </defs>
+        <g class="mgrid">
+          <line x1="0" y1="153" x2="1000" y2="153" /><line x1="0" y1="306" x2="1000" y2="306" />
+          <line x1="250" y1="0" x2="250" y2="460" /><line x1="500" y1="0" x2="500" y2="460" /><line x1="750" y1="0" x2="750" y2="460" />
+        </g>
+        <g class="mland">
+          <path d="M120,95 Q160,70 230,80 Q300,90 305,130 Q300,160 255,165 Q260,205 235,235 Q205,225 195,180 Q150,165 140,130 Q120,115 120,95 Z" />
+          <path d="M325,255 Q370,250 388,290 Q392,330 365,375 Q345,420 332,375 Q320,320 318,285 Q318,262 325,255 Z" />
+          <path d="M482,108 Q520,98 552,112 Q560,140 530,160 Q500,162 485,140 Q478,122 482,108 Z" />
+          <path d="M508,182 Q570,172 612,200 Q620,250 585,315 Q558,360 540,310 Q518,255 505,210 Q502,190 508,182 Z" />
+          <path d="M560,100 Q700,80 850,110 Q905,125 885,165 Q840,190 790,178 Q740,200 690,188 Q640,205 600,180 Q565,155 558,125 Q556,108 560,100 Z" />
+          <path d="M838,308 Q895,300 938,322 Q948,352 905,378 Q855,372 840,345 Q832,322 838,308 Z" />
+        </g>
+        <g id="arcLayer" style="opacity:0">
+          <path id="flightArc" class="farc" d="" />
+          <text id="plane" class="plane" font-size="22">✈️
+            <animateMotion id="planeMotion" dur="3.4s" repeatCount="indefinite" keyPoints="0;0.82;0" keyTimes="0;0.7;1" calcMode="linear">
+              <mpath href="#flightArc" />
+            </animateMotion>
+          </text>
+        </g>
+        <g class="origin" transform="translate(250,180)">
+          <circle class="opulse" r="4"><animate attributeName="r" values="4;18" dur="1.7s" repeatCount="indefinite" /><animate attributeName="opacity" values=".55;0" dur="1.7s" repeatCount="indefinite" /></circle>
+          <circle r="4.5" />
+          <text y="-12" class="olabel" text-anchor="middle">Your couch</text>
+        </g>
+        <g id="destPins"></g>
+      </svg>
+    </div>
+
+    <div class="dest-row" id="destRow"></div>
+    <div id="tripCard"></div>
+  </section>
+
+  <footer>
+    Phantom is a novelty entertainment app — a placebo. No food is cooked, no driver is dispatched, no money moves.<br/>
+    100% of orders are ghosted. That's the feature, not the bug.<br/>
+    <a href="privacy-policy.html" style="color:var(--accent);font-weight:600">Privacy Policy</a>
+  </footer>
+</div>
+
+<!-- Login (on-device only — no servers, nothing is sent anywhere) -->
+<div class="overlay" id="loginOverlay">
+  <div class="track" style="text-align:center">
+    <div style="font-size:42px">👻</div>
+    <h2>Sign in to Phantom</h2>
+    <div class="sub">One email. No password. Nothing real.</div>
+    <div id="loginStep1" style="text-align:left">
+      <div class="field"><label>Email</label><input id="loginEmail" type="email" autocomplete="off" placeholder="you@example.com" /></div>
+      <div class="field"><label>Name (optional)</label><input id="loginName" maxlength="18" placeholder="Ghost with the most" /></div>
+      <button class="btn" id="loginContinue">Send magic code ✨</button>
+      <button class="btn ghost" id="loginGuest" style="margin-top:10px">Continue as ghost 👻</button>
+    </div>
+    <div id="loginStep2" style="display:none">
+      <div class="sub" style="margin:10px 0 4px">We'd email you this code… but Phantom never delivers anything. So here it is:</div>
+      <div class="login-code" id="loginCodeShow"></div>
+      <div class="field" style="text-align:left"><label>Enter code (we pre-filled it — we're not monsters)</label><input id="loginCodeInput" inputmode="numeric" maxlength="4" /></div>
+      <button class="btn" id="loginVerify">Verify &amp; enter</button>
+    </div>
+    <div class="disclaimer" style="margin-top:14px;text-align:left">🔒 Your email never leaves this device. Phantom has no servers, sends nothing, and couldn't email you even if it wanted to.</div>
+  </div>
+</div>
+
+<!-- First-run novelty disclaimer -->
+<div class="overlay" id="introOverlay">
+  <div class="track" style="text-align:center">
+    <div style="font-size:42px">👻</div>
+    <h2>Phantom is just for fun</h2>
+    <div class="sub" style="margin-bottom:18px">This is a <b>novelty entertainment app</b> — a placebo. Nothing here is real: no food, rides, or trips are ever ordered, no driver is sent, and <b>no payment is ever taken</b> (the wallet is fake and never asks for a real card). It exists purely for the dopamine of tapping "order." 🍔🚗✈️</div>
+    <button class="btn" id="introOk">Got it — it's all pretend</button>
+  </div>
+</div>
+
+<!-- Tracking overlay -->
+<div class="overlay" id="overlay">
+  <div class="track">
+    <h2 id="trackTitle">Order placed! 🎉</h2>
+    <div class="sub" id="trackSub">Sit tight, good things are coming...</div>
+    <div class="paychip" id="paychip"></div>
+
+    <div id="mapWrap" style="display:none">
+      <div class="map">
+        <div class="road"></div>
+        <div class="pin dest">📍</div>
+        <div class="car" id="car">🚗</div>
+        <div class="pin" style="left:10%">🧍</div>
+      </div>
+    </div>
+
+    <div class="eta-big" id="etaLabel">Estimated arrival</div>
+    <div class="eta-num" id="etaNum">3<span> min</span></div>
+
+    <div class="progress"><div id="bar"></div></div>
+    <div class="speed-row" id="speedRow">
+      <span class="spd-label">Speed</span>
+      <button class="spd" data-spd="demo">👻 Demo</button>
+      <button class="spd" data-spd="1">1× IRL</button>
+      <button class="spd" data-spd="1.5">1.5×</button>
+      <button class="spd" data-spd="2">2×</button>
+    </div>
+    <div class="status" id="status"><span class="pulse"></span>Confirming your order...</div>
+
+    <div class="ghosted-banner" id="ghostBanner"></div>
+
+    <button class="btn ghost" id="viewReceipt" style="margin-top:10px">🧾 View phantom receipt</button>
+    <button class="btn ghost" id="closeTrack" style="margin-top:10px">I'm being ghosted, aren't I… (close)</button>
+    <div class="waitnote" id="waitnote"></div>
+  </div>
+</div>
+
+<!-- Phantom receipt -->
+<div class="overlay" id="receiptOverlay">
+  <div class="receipt-wrap">
+    <div class="receipt" id="receiptPaper"></div>
+    <button class="btn ghost receipt-close" id="closeReceipt">Crumple it up (close)</button>
+  </div>
+</div>
+
+<script>
+/* ---------- data ---------- */
+const MARKETS = {
+  NYC: { name:"New York City", emoji:"🗽", tagline:"bodega to omakase — all ghosted", factor:1.0 },
+  LA:  { name:"Los Angeles",   emoji:"🌴", tagline:"taco truck to vegan bowl — all ghosted", factor:0.95 },
+};
+
+// Market-exclusive sections (swap with the NYC/LA toggle)
+const MARKET_SECTIONS = {
+  NYC: { name:"NYC Classics", emoji:"🗽", dishes:[
+    { emoji:"🍕", name:"$1 Dollar Slice", desc:"The myth, the legend, never arrives.", price:1.00, cal:420 },
+    { emoji:"🧆", name:"Halal Cart Combo", desc:"Chicken & lamb over rice, white sauce.", price:10.00, cal:1080 },
+    { emoji:"🥪", name:"Bacon Egg & Cheese", desc:"On a roll, salt pepper ketchup.", price:6.50, cal:620 },
+    { emoji:"🥯", name:"Everything Bagel & Lox", desc:"Cream cheese, capers, red onion.", price:14.00, cal:680 },
+    { emoji:"🥩", name:"Pastrami on Rye", desc:"Hand-cut, mustard, half-sour pickle.", price:19.00, cal:940 },
+  ]},
+  LA: { name:"LA Classics", emoji:"🌴", dishes:[
+    { emoji:"🌮", name:"Street Tacos (4)", desc:"Off the truck, salsa verde, onion-cilantro.", price:11.00, cal:640 },
+    { emoji:"🍔", name:"Double-Double Phantom", desc:"Animal style. Then never style.", price:8.50, cal:770 },
+    { emoji:"🍇", name:"Açaí Bowl", desc:"Granola, banana, honey drizzle.", price:13.00, cal:480 },
+    { emoji:"🌯", name:"California Burrito", desc:"Carne asada with fries inside.", price:12.50, cal:1080 },
+    { emoji:"🥗", name:"Vegan Buddha Bowl", desc:"Quinoa, avocado, tahini.", price:14.00, cal:520 },
+    { emoji:"🥩", name:"Korean BBQ Plate", desc:"Galbi, banchan, rice.", price:24.00, cal:1020 },
+  ]},
+};
+
+// Shared cuisines available in both markets
+const CUISINES = [
+  { name:"Mexican", emoji:"🌮", dishes:[
+    { emoji:"🌮", name:"Tacos al Pastor", desc:"Spit-roasted pork, pineapple, cilantro.", price:13.50, cal:720 },
+    { emoji:"🧀", name:"Birria Quesatacos", desc:"Crispy, cheesy, consommé for dipping.", price:16.00, cal:890 },
+    { emoji:"🌽", name:"Elote", desc:"Grilled street corn, cotija, chili-lime.", price:6.50, cal:280 },
+    { emoji:"🍩", name:"Churros", desc:"Cinnamon sugar, dulce de leche.", price:7.00, cal:510 },
+  ]},
+  { name:"Halal", emoji:"🧆", dishes:[
+    { emoji:"🍛", name:"Chicken Over Rice", desc:"White sauce, a little red. The cart classic.", price:11.00, cal:960 },
+    { emoji:"🥙", name:"Lamb Gyro", desc:"Shaved lamb, pita, tzatziki.", price:12.50, cal:820 },
+    { emoji:"🧆", name:"Falafel Platter", desc:"Crispy chickpea, hummus, salad.", price:10.50, cal:640 },
+    { emoji:"🍱", name:"Combo Over Rice", desc:"Chicken + lamb, extra white sauce.", price:13.50, cal:1080 },
+  ]},
+  { name:"Greek", emoji:"🇬🇷", dishes:[
+    { emoji:"🍢", name:"Chicken Souvlaki", desc:"Charred skewers, lemon, oregano.", price:14.00, cal:700 },
+    { emoji:"🥙", name:"Gyro Pita", desc:"Pork gyro, fries inside, tzatziki.", price:12.00, cal:850 },
+    { emoji:"🥬", name:"Spanakopita", desc:"Spinach & feta in flaky phyllo.", price:9.00, cal:480 },
+    { emoji:"🍯", name:"Baklava", desc:"Honey, walnut, phyllo layers.", price:6.50, cal:430 },
+  ]},
+  { name:"Spanish", emoji:"🥘", dishes:[
+    { emoji:"🦐", name:"Seafood Paella", desc:"Saffron rice, shrimp, mussels.", price:19.00, cal:760 },
+    { emoji:"🥔", name:"Patatas Bravas", desc:"Crispy potatoes, spicy aioli.", price:8.50, cal:520 },
+    { emoji:"🧀", name:"Jamón & Manchego", desc:"Cured ham, sheep's-milk cheese.", price:14.00, cal:600 },
+    { emoji:"🦐", name:"Gambas al Ajillo", desc:"Garlic shrimp, olive oil, chili.", price:15.50, cal:540 },
+  ]},
+  { name:"Italian", emoji:"🍝", dishes:[
+    { emoji:"🧀", name:"Cacio e Pepe", desc:"Pecorino, black pepper, tonnarelli.", price:17.00, cal:820 },
+    { emoji:"🍝", name:"Lasagna", desc:"Layered ragù, béchamel, basil.", price:16.50, cal:980 },
+    { emoji:"🍅", name:"Bruschetta", desc:"Tomato, garlic, basil, olive oil.", price:9.00, cal:360 },
+    { emoji:"☕", name:"Tiramisu", desc:"Espresso, mascarpone, cocoa.", price:8.50, cal:520 },
+  ]},
+  { name:"Colombian", emoji:"🫓", dishes:[
+    { emoji:"🍳", name:"Bandeja Paisa", desc:"Beans, rice, chicharrón, egg, plantain.", price:18.00, cal:1320 },
+    { emoji:"🫓", name:"Arepa de Queso", desc:"Griddled corn cake, melty cheese.", price:7.50, cal:470 },
+    { emoji:"🥟", name:"Empanadas (3)", desc:"Crispy, beef, ají on the side.", price:9.00, cal:560 },
+    { emoji:"🍲", name:"Sancocho", desc:"Hearty chicken & plantain stew.", price:14.50, cal:690 },
+  ]},
+  { name:"Peruvian", emoji:"🐟", dishes:[
+    { emoji:"🐟", name:"Ceviche Clásico", desc:"Fish cured in leche de tigre.", price:16.00, cal:380 },
+    { emoji:"🥩", name:"Lomo Saltado", desc:"Stir-fried beef, fries, rice.", price:17.50, cal:940 },
+    { emoji:"🍗", name:"Ají de Gallina", desc:"Creamy ají chicken over rice.", price:15.00, cal:720 },
+    { emoji:"🥔", name:"Causa Limeña", desc:"Layered potato, chicken, avocado.", price:11.00, cal:510 },
+  ]},
+  { name:"Salvadoran", emoji:"🫓", dishes:[
+    { emoji:"🫓", name:"Pupusas (3)", desc:"Stuffed masa, curtido, salsa roja.", price:10.00, cal:680 },
+    { emoji:"🍟", name:"Yuca Frita", desc:"Fried cassava, chicharrón, curtido.", price:9.00, cal:590 },
+    { emoji:"🥟", name:"Pastelitos", desc:"Crispy masa turnovers, beef.", price:8.50, cal:520 },
+    { emoji:"🥛", name:"Horchata", desc:"Morro-seed, cinnamon, sweet.", price:4.50, cal:220 },
+  ]},
+  { name:"Ethiopian", emoji:"🍲", dishes:[
+    { emoji:"🍗", name:"Doro Wat", desc:"Spiced chicken stew, berbere, egg.", price:16.50, cal:740 },
+    { emoji:"🥬", name:"Veggie Combo", desc:"Lentils & greens, all on injera.", price:15.00, cal:620 },
+    { emoji:"🥩", name:"Kitfo", desc:"Minced beef, niter kibbeh, mitmita.", price:17.00, cal:810 },
+    { emoji:"🥟", name:"Sambusa", desc:"Crispy lentil or beef pockets.", price:6.50, cal:340 },
+  ]},
+  { name:"Pizza", emoji:"🍕", dishes:[
+    { emoji:"🍕", name:"Margherita", desc:"San Marzano, fresh mozz, basil.", price:16.00, cal:900 },
+    { emoji:"🍕", name:"Pepperoni", desc:"Cup-and-char pepperoni.", price:17.00, cal:1020 },
+    { emoji:"🟧", name:"Sicilian Square", desc:"Thick, airy, crispy bottom.", price:4.00, cal:380 },
+    { emoji:"🤍", name:"White Pie", desc:"Ricotta, mozz, garlic, no sauce.", price:18.00, cal:960 },
+  ]},
+  { name:"Uzbek", emoji:"🍢", dishes:[
+    { emoji:"🍚", name:"Plov", desc:"Lamb, carrots, cumin rice.", price:15.00, cal:880 },
+    { emoji:"🍜", name:"Lagman", desc:"Hand-pulled noodles, beef, peppers.", price:14.50, cal:760 },
+    { emoji:"🥟", name:"Manti", desc:"Steamed lamb dumplings, yogurt.", price:13.00, cal:640 },
+    { emoji:"🔺", name:"Samsa", desc:"Flaky baked meat pastry.", price:6.00, cal:420 },
+  ]},
+  { name:"Brazilian", emoji:"🥩", dishes:[
+    { emoji:"🥩", name:"Picanha", desc:"Churrasco sirloin, chimichurri.", price:22.00, cal:980 },
+    { emoji:"🍲", name:"Feijoada", desc:"Black bean & pork stew, rice, orange.", price:18.00, cal:1100 },
+    { emoji:"🧀", name:"Pão de Queijo", desc:"Cheesy tapioca puffs.", price:6.00, cal:360 },
+    { emoji:"🍗", name:"Coxinha", desc:"Shredded chicken croquettes.", price:8.00, cal:480 },
+  ]},
+  { name:"Japanese", emoji:"🍣", dishes:[
+    { emoji:"🍣", name:"Omakase Nigiri", desc:"Chef's selection, seasonal.", price:26.00, cal:520 },
+    { emoji:"🍜", name:"Tonkotsu Ramen", desc:"Pork broth, chashu, soft egg.", price:16.00, cal:780 },
+    { emoji:"🍱", name:"Chicken Katsu Curry", desc:"Crispy cutlet, curry, rice.", price:15.00, cal:860 },
+  ]},
+  { name:"Chinese", emoji:"🥡", dishes:[
+    { emoji:"🥟", name:"Soup Dumplings", desc:"Xiao long bao, ginger-vinegar.", price:12.00, cal:560 },
+    { emoji:"🍜", name:"Beef Lo Mein", desc:"Wok noodles, scallion.", price:13.50, cal:820 },
+    { emoji:"🌶️", name:"Mapo Tofu", desc:"Numbing-spicy, silky tofu.", price:13.00, cal:640 },
+  ]},
+  { name:"Thai", emoji:"🍜", dishes:[
+    { emoji:"🍤", name:"Pad Thai", desc:"Tamarind, shrimp, peanut.", price:14.00, cal:760 },
+    { emoji:"🍛", name:"Green Curry", desc:"Coconut, basil, chicken.", price:15.00, cal:700 },
+    { emoji:"🥭", name:"Mango Sticky Rice", desc:"Coconut sweet rice.", price:8.00, cal:460 },
+  ]},
+  { name:"Indian", emoji:"🍛", dishes:[
+    { emoji:"🍗", name:"Butter Chicken", desc:"Tomato-cream, fenugreek.", price:16.00, cal:820 },
+    { emoji:"🍚", name:"Lamb Biryani", desc:"Fragrant basmati, saffron.", price:17.00, cal:940 },
+    { emoji:"🫓", name:"Garlic Naan", desc:"Blistered, buttery.", price:4.50, cal:280 },
+  ]},
+  { name:"Korean", emoji:"🍗", dishes:[
+    { emoji:"🍗", name:"Korean Fried Chicken", desc:"Soy-garlic or gochujang.", price:16.50, cal:1000 },
+    { emoji:"🍲", name:"Bibimbap", desc:"Veg, beef, egg, gochujang.", price:15.00, cal:720 },
+    { emoji:"🌶️", name:"Tteokbokki", desc:"Chewy rice cakes, spicy.", price:11.00, cal:540 },
+  ]},
+  { name:"Caribbean", emoji:"🇯🇲", dishes:[
+    { emoji:"🍗", name:"Jerk Chicken", desc:"Scotch bonnet, allspice, smoke.", price:15.00, cal:780 },
+    { emoji:"🥩", name:"Oxtail", desc:"Braised, butter beans, rice & peas.", price:19.00, cal:1020 },
+    { emoji:"🥟", name:"Beef Patty", desc:"Flaky, golden, spicy.", price:4.50, cal:380 },
+  ]},
+  { name:"American", emoji:"🍔", dishes:[
+    { emoji:"🍔", name:"Smash Burger", desc:"Double patty, special sauce.", price:12.99, cal:980 },
+    { emoji:"🍗", name:"Buffalo Wings", desc:"12 pc, blue cheese.", price:13.30, cal:1100 },
+    { emoji:"🍟", name:"Loaded Fries", desc:"Cheese, bacon, scallion.", price:9.00, cal:720 },
+    { emoji:"🥤", name:"Vanilla Milkshake", desc:"Thick, vanilla bean.", price:6.50, cal:540 },
+  ]},
+  { name:"Sweets & Late Night", emoji:"🍦", dishes:[
+    { emoji:"🍦", name:"Soft Serve Sundae", desc:"Hot fudge, sprinkles.", price:7.99, cal:540 },
+    { emoji:"🍰", name:"NY Cheesecake", desc:"Graham crust, classic.", price:8.50, cal:620 },
+    { emoji:"🧋", name:"Brown Sugar Boba", desc:"Milk tea, chewy pearls.", price:6.00, cal:380 },
+  ]},
+  // NYC-only cuisines (see MARKET_RULES)
+  { name:"Ecuadorian", emoji:"🇪🇨", only:"NYC", dishes:[
+    { emoji:"🐟", name:"Encebollado", desc:"Tuna & yuca soup, pickled onion.", price:13.50, cal:520 },
+    { emoji:"🍤", name:"Ceviche de Camarón", desc:"Shrimp ceviche, tomato-lime, chifles.", price:15.00, cal:390 },
+    { emoji:"🥔", name:"Llapingachos", desc:"Cheesy potato patties, peanut sauce.", price:11.00, cal:610 },
+    { emoji:"🍌", name:"Bolón de Verde", desc:"Green plantain ball, cheese & chicharrón.", price:8.50, cal:480 },
+  ]},
+  { name:"Egyptian", emoji:"🇪🇬", only:"NYC", dishes:[
+    { emoji:"🍝", name:"Koshary", desc:"Rice, lentils, pasta, crispy onions.", price:10.50, cal:720 },
+    { emoji:"🫘", name:"Ful Medames", desc:"Slow fava beans, olive oil, baladi bread.", price:9.00, cal:450 },
+    { emoji:"🧆", name:"Ta'ameya", desc:"Fava-bean falafel, tahina, pickles.", price:8.50, cal:430 },
+    { emoji:"🍲", name:"Molokhia", desc:"Garlicky jute-leaf stew, over rice.", price:13.00, cal:540 },
+  ]},
+  { name:"West African", emoji:"🌍", only:"NYC", dishes:[
+    { emoji:"🍚", name:"Jollof Rice", desc:"Smoky party rice — the one true recipe (ours).", price:12.00, cal:680 },
+    { emoji:"🍢", name:"Suya Skewers", desc:"Peanut-spiced grilled beef, yaji.", price:13.50, cal:560 },
+    { emoji:"🍲", name:"Egusi & Fufu", desc:"Melon-seed stew, pounded fufu.", price:15.00, cal:750 },
+    { emoji:"🐟", name:"Thieboudienne", desc:"Senegalese fish & broken rice.", price:16.00, cal:690 },
+  ]},
+];
+
+const RIDES = [
+  { ic:"🚗", t:"PhantomX", p:"$11", mult:1 },
+  { ic:"🚙", t:"Comfort", p:"$17", mult:1.4 },
+  { ic:"🚐", t:"Black", p:"$32", mult:2.2 },
+];
+
+const FOOD_STATUS = [
+  "Restaurant accepted your order",
+  "Chef is locating the perfect avocado 🥑",
+  "Searing things you'll never taste",
+  "Packing it up nice and warm",
+  "Finding a driver... found one!",
+  "Driver is heading to the restaurant",
+];
+
+const FOOD_EXCUSES = [
+  "Driver stopped to eat your order 🫠",
+  "Rerouting around a parade 🎺",
+  "Driver took the scenic route. Very scenic.",
+  "Order fell into a pothole. ETA recalculating.",
+  "Driver swears they're 'right around the corner'",
+  "Restaurant remade it. They dropped it. Again.",
+  "Your driver matched with a different destiny",
+  "GPS sent them to a cornfield 🌽",
+];
+
+const RIDE_STATUS = [
+  "Matching you with a nearby driver...",
+  "Driver accepted! Marco is on the way",
+  "Marco is approaching your pickup",
+  "Marco is almost there...",
+  "Marco is right outside (he is not)",
+];
+
+const RIDE_EXCUSES = [
+  "Marco missed the turn. Looping back 🔁",
+  "Marco stopped for gas. And a sandwich.",
+  "Driver is 'two minutes away' (immortal phrase)",
+  "Marco cancelled. Finding a new ghost...",
+  "Heavy traffic in the void. Please hold.",
+  "Marco drove past. Waved. Kept going. 👋",
+];
+
+const TRAVEL_STATUS = [
+  "Booking confirmed — gate pending",
+  "Gate assigned: B12 ✈️",
+  "Now boarding zone 1...",
+  "Final boarding call",
+  "Doors closing...",
+];
+
+const TRAVEL_EXCUSES = [
+  "Gate changed to D7. Please walk 2 miles.",
+  "Delayed — incoming aircraft is also a phantom ✈️",
+  "Boarding paused for 'operational reasons'",
+  "Captain stuck in traffic 🚕",
+  "Crew rest. Your dopamine may rest too.",
+  "Weather delay in a city you're not even in 🌧️",
+  "Seat 14C double-booked with a ghost 👻",
+  "Now boarding... just kidding. Sit back down.",
+];
+
+/* ---------- state ---------- */
+let cart = [];
+let stats = JSON.parse(localStorage.getItem("phantomStats") || '{"ghosted":0,"saved":0,"cal":0}');
+let timer = null;
+
+/* ---------- render menu (market → cultural region → cuisine) ---------- */
+let market = localStorage.getItem("phantomMarket") || "NYC";
+let activeCat = "all";
+
+// Cultural regions (in display order) + which region each cuisine belongs to.
+const REGION_ORDER = [
+  { name: "Latin American & Caribbean", emoji: "🌮", short: "Latin American" },
+  { name: "Asian", emoji: "🥢", short: "Asian" },
+  { name: "Mediterranean & Middle Eastern", emoji: "🫒", short: "Mediterranean" },
+  { name: "African", emoji: "🌍", short: "African" },
+  { name: "American & Comfort", emoji: "🍔", short: "American & Comfort" },
+];
+const REGION_OF = {
+  "Mexican": "Latin American & Caribbean", "Colombian": "Latin American & Caribbean",
+  "Peruvian": "Latin American & Caribbean", "Salvadoran": "Latin American & Caribbean",
+  "Brazilian": "Latin American & Caribbean", "Caribbean": "Latin American & Caribbean",
+  "Japanese": "Asian", "Chinese": "Asian", "Thai": "Asian", "Korean": "Asian", "Indian": "Asian", "Uzbek": "Asian",
+  "Greek": "Mediterranean & Middle Eastern", "Italian": "Mediterranean & Middle Eastern",
+  "Spanish": "Mediterranean & Middle Eastern", "Halal": "Mediterranean & Middle Eastern",
+  "Ethiopian": "African",
+  "Pizza": "American & Comfort", "American": "American & Comfort", "Sweets & Late Night": "American & Comfort",
+  "Ecuadorian": "Latin American & Caribbean", "Egyptian": "African", "West African": "African",
+};
+
+// Per-market menu rules: cuisines to drop, and cuisines pinned to the top of a region.
+const MARKET_RULES = {
+  LA:  { exclude: ["Uzbek", "Halal"] },
+  NYC: { priority: { "Latin American & Caribbean": ["Ecuadorian"] } },
+};
+function cuisinesInRegion(regionName) {
+  const rules = MARKET_RULES[market] || {};
+  const list = CUISINES
+    .filter(c => REGION_OF[c.name] === regionName)
+    .filter(c => !c.only || c.only === market)
+    .filter(c => !(rules.exclude || []).includes(c.name));
+  const pri = (rules.priority || {})[regionName] || [];
+  return list.sort((a, b) =>
+    (pri.includes(a.name) ? pri.indexOf(a.name) : 1e9) - (pri.includes(b.name) ? pri.indexOf(b.name) : 1e9));
+}
+
+const CITY_KW = { "Tokyo": "tokyo", "Paris": "paris", "Bali": "bali", "New York": "newyork", "Reykjavík": "iceland", "Rio": "rio", "Sydney": "sydney", "Cairo": "pyramids" };
+function hashStr(s) { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; }
+// Hand-verified photo per dish — every image is the finished plated food, no people.
+// Sources: TheMealDB + Wikimedia Commons (anonymous hotlinks, no tracking).
+const DISH_PHOTOS = {
+  "$1 Dollar Slice": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/New_York_Pizza_Slices.png/500px-New_York_Pizza_Slices.png",
+  "Ají de Gallina": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Aj%C3%AD_de_gallina.jpg/500px-Aj%C3%AD_de_gallina.jpg",
+  "Arepa de Queso": "https://www.themealdb.com/images/media/meals/ejht7k1780092390.jpg",
+  "Açaí Bowl": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/A%C3%A7a%C3%AD_na_tigela_2.jpg/500px-A%C3%A7a%C3%AD_na_tigela_2.jpg",
+  "Bacon Egg & Cheese": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Egg_and_cheese_breakfast_sandwich.jpg/500px-Egg_and_cheese_breakfast_sandwich.jpg",
+  "Baklava": "https://www.themealdb.com/images/media/meals/ytme8t1764111401.jpg",
+  "Bandeja Paisa": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Bandeja_paisa_30062011.jpg/500px-Bandeja_paisa_30062011.jpg",
+  "Beef Lo Mein": "https://www.themealdb.com/images/media/meals/1529444830.jpg",
+  "Beef Patty": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ef/Jamaican_patties_and_redstripe.jpg/500px-Jamaican_patties_and_redstripe.jpg",
+  "Bibimbap": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/Bibimbap_with_egg.jpg/500px-Bibimbap_with_egg.jpg",
+  "Birria Quesatacos": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Quesabirria_at_Taqueria_La_Hacienda%2C_Sonoma%2C_California_-_Sarah_Stierch.jpg/500px-Quesabirria_at_Taqueria_La_Hacienda%2C_Sonoma%2C_California_-_Sarah_Stierch.jpg",
+  "Brown Sugar Boba": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Pearl_Milk_Tea_in_Chun_Shui_Tang.jpg/500px-Pearl_Milk_Tea_in_Chun_Shui_Tang.jpg",
+  "Bruschetta": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Pa_amb_tom%C3%A0quet_-_001.jpg/500px-Pa_amb_tom%C3%A0quet_-_001.jpg",
+  "Buffalo Wings": "https://www.themealdb.com/images/media/meals/4hzyvq1763792564.jpg",
+  "Butter Chicken": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/Butter_Chicken%2C_City_Grill_Kottayam.jpg/500px-Butter_Chicken%2C_City_Grill_Kottayam.jpg",
+  "Cacio e Pepe": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Spaghetti%2C_cacio_e_pepe_%26_bitter_leaf_salad_-_Tutto_2024-04-04.jpg/500px-Spaghetti%2C_cacio_e_pepe_%26_bitter_leaf_salad_-_Tutto_2024-04-04.jpg",
+  "California Burrito": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Carne-asada-burrito.jpg/500px-Carne-asada-burrito.jpg",
+  "Causa Limeña": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Causa_Rellena.jpg/500px-Causa_Rellena.jpg",
+  "Ceviche Clásico": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Ceviche_de_pescado_%28La_Punta%2C_Callao%29.jpg/500px-Ceviche_de_pescado_%28La_Punta%2C_Callao%29.jpg",
+  "Chicken Katsu Curry": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Pumpkin_Katsu_Curry_and_Chicken_Katsu_Curry_-_Sunoso.jpg/500px-Pumpkin_Katsu_Curry_and_Chicken_Katsu_Curry_-_Sunoso.jpg",
+  "Chicken Over Rice": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Anar_Daneh_Mossamma.jpg/500px-Anar_Daneh_Mossamma.jpg",
+  "Chicken Souvlaki": "https://www.themealdb.com/images/media/meals/rjhf741585564676.jpg",
+  "Churros": "https://www.themealdb.com/images/media/meals/nxnny61763250596.jpg",
+  "Combo Over Rice": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ed/My_spork_likes..._%285447224070%29.jpg/500px-My_spork_likes..._%285447224070%29.jpg",
+  "Coxinha": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Coxinha.jpg/500px-Coxinha.jpg",
+  "Doro Wat": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/Ethiopian_wat.jpg/500px-Ethiopian_wat.jpg",
+  "Double-Double Phantom": "https://www.themealdb.com/images/media/meals/lgmnff1763789847.jpg",
+  "Elote": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Mexican_Corn_Cob.jpg/500px-Mexican_Corn_Cob.jpg",
+  "Empanadas (3)": "https://www.themealdb.com/images/media/meals/q99te31763075494.jpg",
+  "Everything Bagel & Lox": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Lox-and-bagel-02.jpg/500px-Lox-and-bagel-02.jpg",
+  "Falafel Platter": "https://www.themealdb.com/images/media/meals/u5e9qq1763795441.jpg",
+  "Feijoada": "https://www.themealdb.com/images/media/meals/xrxz7h1782592711.jpg",
+  "Gambas al Ajillo": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Gambas_al_ajillo%2C_2024.jpg/500px-Gambas_al_ajillo%2C_2024.jpg",
+  "Garlic Naan": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Naan_baked_in_Tandoor.jpg/500px-Naan_baked_in_Tandoor.jpg",
+  "Green Curry": "https://www.themealdb.com/images/media/meals/sstssx1487349585.jpg",
+  "Gyro Pita": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Pitta_Mushroom_Gyros_-_Montague_Gyros_2025-12-06.jpg/500px-Pitta_Mushroom_Gyros_-_Montague_Gyros_2025-12-06.jpg",
+  "Halal Cart Combo": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Fried_Rice%2C_Vegetable%2C_Chicken_Curry%2C_Fried_Chicken_%26_Salad_Platter%2C_Pizzaology-Rajshahi.jpg/500px-Fried_Rice%2C_Vegetable%2C_Chicken_Curry%2C_Fried_Chicken_%26_Salad_Platter%2C_Pizzaology-Rajshahi.jpg",
+  "Horchata": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/Horchata%2C_my_drink_of_choice_in_Mexico_-_Merida_Yucatan_21_March_2021.jpg/500px-Horchata%2C_my_drink_of_choice_in_Mexico_-_Merida_Yucatan_21_March_2021.jpg",
+  "Jamón & Manchego": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Various_cheeses.jpg/500px-Various_cheeses.jpg",
+  "Jerk Chicken": "https://www.themealdb.com/images/media/meals/tytyxu1515363282.jpg",
+  "Kitfo": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Kitfo_%28Ethiopian_Tartar%29.jpg/500px-Kitfo_%28Ethiopian_Tartar%29.jpg",
+  "Korean BBQ Plate": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Korean_BBQ-Galbi-01.jpg/500px-Korean_BBQ-Galbi-01.jpg",
+  "Korean Fried Chicken": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Korean_fried_chicken_240206.jpg/500px-Korean_fried_chicken_240206.jpg",
+  "Lagman": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dc/Lagman_Moscow_2023.jpg/500px-Lagman_Moscow_2023.jpg",
+  "Lamb Biryani": "https://www.themealdb.com/images/media/meals/xrttsx1487339558.jpg",
+  "Lamb Gyro": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Pita_giros.JPG/500px-Pita_giros.JPG",
+  "Lasagna": "https://www.themealdb.com/images/media/meals/wtsvxx1511296896.jpg",
+  "Loaded Fries": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Pub_food_for_the_Win_%28Unsplash%29.jpg/500px-Pub_food_for_the_Win_%28Unsplash%29.jpg",
+  "Lomo Saltado": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Lomo-saltado-perudelights.jpg/500px-Lomo-saltado-perudelights.jpg",
+  "Mango Sticky Rice": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Mango_sticy_rice_%283859549574%29.jpg/500px-Mango_sticy_rice_%283859549574%29.jpg",
+  "Manti": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Manti_%28dumpling%29_In_Istanbul.jpg/500px-Manti_%28dumpling%29_In_Istanbul.jpg",
+  "Mapo Tofu": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Billyfoodmabodofu3.jpg/500px-Billyfoodmabodofu3.jpg",
+  "Margherita": "https://www.themealdb.com/images/media/meals/x0lk931587671540.jpg",
+  "NY Cheesecake": "https://www.themealdb.com/images/media/meals/swttys1511385853.jpg",
+  "Omakase Nigiri": "https://www.themealdb.com/images/media/meals/g046bb1663960946.jpg",
+  "Oxtail": "https://www.themealdb.com/images/media/meals/1520083578.jpg",
+  "Pad Thai": "https://www.themealdb.com/images/media/meals/rg9ze01763479093.jpg",
+  "Pastelitos": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Empanada_-_Stu_Spivack.jpg/500px-Empanada_-_Stu_Spivack.jpg",
+  "Pastrami on Rye": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Canter%27s_Pastrami_sandwich.jpg/500px-Canter%27s_Pastrami_sandwich.jpg",
+  "Patatas Bravas": "https://www.themealdb.com/images/media/meals/bvg8sn1763298713.jpg",
+  "Pepperoni": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Pizza_Tradici%C3%B3n_Napolitana.jpg/500px-Pizza_Tradici%C3%B3n_Napolitana.jpg",
+  "Picanha": "https://www.themealdb.com/images/media/meals/vussxq1511882648.jpg",
+  "Plov": "https://www.themealdb.com/images/media/meals/kos9av1699014767.jpg",
+  "Pupusas (3)": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/39/Pupusas..JPG/500px-Pupusas..JPG",
+  "Pão de Queijo": "https://www.themealdb.com/images/media/meals/sl7cr91782588539.jpg",
+  "Sambusa": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Indian_Samosa_by_clumsy_home_chef.jpg/500px-Indian_Samosa_by_clumsy_home_chef.jpg",
+  "Samsa": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/Samsa_of_Khiva.jpg/500px-Samsa_of_Khiva.jpg",
+  "Sancocho": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Sancocho-hueso.JPG/500px-Sancocho-hueso.JPG",
+  "Seafood Paella": "https://www.themealdb.com/images/media/meals/9bl20p1763248192.jpg",
+  "Sicilian Square": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/L%26B_Spumoni_Gardens_pizza_%2841436%29.jpg/500px-L%26B_Spumoni_Gardens_pizza_%2841436%29.jpg",
+  "Smash Burger": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Smashburger_BBQ_bacon_cheddar_burger_with_deep-fried_onions_%281%29.jpg/500px-Smashburger_BBQ_bacon_cheddar_burger_with_deep-fried_onions_%281%29.jpg",
+  "Soft Serve Sundae": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Strawberry_Ice_Cream_Sundae_%2826853326174%29.jpg/500px-Strawberry_Ice_Cream_Sundae_%2826853326174%29.jpg",
+  "Soup Dumplings": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Xiao_Long_Bao_by_Junhao%21.jpg/500px-Xiao_Long_Bao_by_Junhao%21.jpg",
+  "Spanakopita": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Spanakopita.jpg/500px-Spanakopita.jpg",
+  "Street Tacos (4)": "https://www.themealdb.com/images/media/meals/uvuyxu1503067369.jpg",
+  "Tacos al Pastor": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/001_Tacos_de_carnitas%2C_carne_asada_y_al_pastor.jpg/500px-001_Tacos_de_carnitas%2C_carne_asada_y_al_pastor.jpg",
+  "Tiramisu": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Dolce_Tiramis%C3%B9_monoporzione.jpg/500px-Dolce_Tiramis%C3%B9_monoporzione.jpg",
+  "Tonkotsu Ramen": "https://www.themealdb.com/images/media/meals/ip5xtp1769779958.jpg",
+  "Tteokbokki": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Korean.snacks-Tteokbokki-08.jpg/500px-Korean.snacks-Tteokbokki-08.jpg",
+  "Vanilla Milkshake": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Vanilla_milkshake_at_Lunchbox_Laboratories.jpg/500px-Vanilla_milkshake_at_Lunchbox_Laboratories.jpg",
+  "Vegan Buddha Bowl": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/Healthy_Vegan_Buddha_Bowl_-_49859044753.jpg/500px-Healthy_Vegan_Buddha_Bowl_-_49859044753.jpg",
+  "Veggie Combo": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/Ethiopian_meal_called_Injera_with_veggies_and_meat.jpg/500px-Ethiopian_meal_called_Injera_with_veggies_and_meat.jpg",
+  "White Pie": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/White_cheese_pizza.jpg/500px-White_cheese_pizza.jpg",
+  "Yuca Frita": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Yuca_frita_in_Bolivia.jpg/500px-Yuca_frita_in_Bolivia.jpg",
+  "Encebollado": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Ceviche_de_camar%C3%B3n_ecuatoriano.jpg/500px-Ceviche_de_camar%C3%B3n_ecuatoriano.jpg",
+  "Ceviche de Camarón": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/CEVICHE_DE_CAMAR%C3%93N_ECUATORIANO.jpg/500px-CEVICHE_DE_CAMAR%C3%93N_ECUATORIANO.jpg",
+  "Llapingachos": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Llapingachos._%2840491622163%29.jpg/500px-Llapingachos._%2840491622163%29.jpg",
+  "Bolón de Verde": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Bolon_ecuatoriano_de_queso_y_chicharr%C3%B3n.jpg/500px-Bolon_ecuatoriano_de_queso_y_chicharr%C3%B3n.jpg",
+  "Koshary": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Egyptian_food_Koshary.jpg/500px-Egyptian_food_Koshary.jpg",
+  "Ful Medames": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/Foul_Mdammis%2C_Tunisie.jpg/500px-Foul_Mdammis%2C_Tunisie.jpg",
+  "Ta'ameya": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Falafel_1.JPG/500px-Falafel_1.JPG",
+  "Molokhia": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Molokheya_hi_res.JPG/500px-Molokheya_hi_res.JPG",
+  "Jollof Rice": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Jollof_rice_with_vegetable.jpg/500px-Jollof_rice_with_vegetable.jpg",
+  "Suya Skewers": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Suya_in_skewers.jpg/500px-Suya_in_skewers.jpg",
+  "Egusi & Fufu": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Pot_of_Egusi_soup.jpg/500px-Pot_of_Egusi_soup.jpg",
+  "Thieboudienne": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Ceebu_Jen%2C_Senegalese_dish.jpg/500px-Ceebu_Jen%2C_Senegalese_dish.jpg",
+};
+function foodPhoto(name) { return DISH_PHOTOS[name] || null; }
+function cityPhoto(city) { return `https://loremflickr.com/320/200/${encodeURIComponent(CITY_KW[city] || city.toLowerCase())}?lock=${hashStr(city) % 100000}`; }
+function vehiclePhoto(kw) { return `https://loremflickr.com/240/140/${encodeURIComponent(kw)}?lock=${hashStr(kw) % 100000}`; }
+function imgFallback(img) { img.style.display = "none"; }
+
+function renderMarketBar() {
+  const m = MARKETS[market];
+  document.querySelectorAll(".market-toggle button").forEach(b => b.classList.toggle("sel", b.dataset.market === market));
+  document.getElementById("marketInfo").innerHTML = `Delivering to <b>${m.emoji} ${m.name}</b> · ${m.tagline}`;
+}
+
+function renderCats() {
+  const row = document.getElementById("catRow");
+  row.innerHTML = "";
+  const mk = (id, label) => {
+    const b = document.createElement("button");
+    b.className = "cat" + (activeCat === id ? " sel" : "");
+    b.textContent = label;
+    b.onclick = () => { activeCat = id; renderCats(); renderMenu(); };
+    row.appendChild(b);
+  };
+  mk("all", "🍽️ All");
+  mk("local", `${MARKETS[market].emoji} ${market} Classics`);
+  REGION_ORDER.forEach(r => mk(r.name, `${r.emoji} ${r.short}`));
+}
+
+function dishGrid(dishes, factor, cuisineName) {
+  const grid = document.createElement("div");
+  grid.className = "grid";
+  dishes.forEach((d, idx) => {
+    const price = Math.round(d.price * factor * 100) / 100;
+    const src = foodPhoto(d.name);
+    const img = src ? `<img src="${src}" loading="lazy" alt="${d.name}" onerror="imgFallback(this)">` : "";
+    const el = document.createElement("div");
+    el.className = "dish";
+    el.innerHTML = `
+      <div class="dish-photo">
+        <span class="dish-emoji">${d.emoji}</span>
+        ${img}
+      </div>
+      <div class="dish-body">
+        <div class="name">${d.name}</div>
+        <div class="desc">${d.desc}</div>
+        <div class="row"><span class="price">$${price.toFixed(2)}</span><span class="add">+ Add</span></div>
+      </div>`;
+    el.onclick = () => { addToCart({ emoji: d.emoji, name: d.name, price, cal: d.cal, cuisine: cuisineName }); bump(el); };
+    grid.appendChild(el);
+  });
+  return grid;
+}
+function regionHeader(label) { const h = document.createElement("div"); h.className = "region-header"; h.textContent = label; return h; }
+function cuisineTitle(label) { const t = document.createElement("div"); t.className = "cuisine-title"; t.textContent = label; return t; }
+
+function renderMenu() {
+  const host = document.getElementById("menuSections");
+  const factor = MARKETS[market].factor;
+  host.innerHTML = "";
+
+  // Spotlight: the city's iconic eats
+  if (activeCat === "all" || activeCat === "local") {
+    const ms = MARKET_SECTIONS[market];
+    host.appendChild(regionHeader(`${ms.emoji} ${ms.name}`));
+    host.appendChild(dishGrid(ms.dishes, factor, ms.name));
+  }
+
+  // Cultural regions → cuisines → dishes
+  REGION_ORDER.forEach(region => {
+    if (activeCat !== "all" && activeCat !== region.name) return;
+    const inRegion = cuisinesInRegion(region.name);
+    if (!inRegion.length) return;
+    host.appendChild(regionHeader(`${region.emoji} ${region.name}`));
+    inRegion.forEach(c => {
+      host.appendChild(cuisineTitle(`${c.emoji} ${c.name}`));
+      host.appendChild(dishGrid(c.dishes, factor, c.name));
+    });
+  });
+}
+
+document.querySelectorAll(".market-toggle button").forEach(b => b.onclick = () => {
+  market = b.dataset.market;
+  localStorage.setItem("phantomMarket", market);
+  activeCat = "all";
+  renderMarketBar(); renderCats(); renderMenu();
+});
+
+renderMarketBar();
+renderCats();
+renderMenu();
+
+const rideTypes = document.getElementById("rideTypes");
+let selRide = 0;
+const RIDE_KW = ["sedan", "suv", "luxury-car"];
+RIDES.forEach((r, i) => {
+  const el = document.createElement("div");
+  el.className = "rt" + (i === 0 ? " sel" : "");
+  el.innerHTML = `<div class="rt-photo"><span class="ic">${r.ic}</span><img src="${vehiclePhoto(RIDE_KW[i] || "car")}" loading="lazy" alt="${r.t}" onerror="imgFallback(this)"></div><div class="t">${r.t}</div><div class="p">${r.p}</div>`;
+  el.onclick = () => {
+    selRide = i;
+    document.querySelectorAll(".rt").forEach(x => x.classList.remove("sel"));
+    el.classList.add("sel");
+  };
+  rideTypes.appendChild(el);
+});
+
+/* ---------- cart ---------- */
+function addToCart(dish) {
+  cart.push(dish);
+  const count = cart.length;
+  const total = cart.reduce((s, x) => s + x.price, 0);
+  document.getElementById("cartCount").textContent = count + (count === 1 ? " item" : " items");
+  document.getElementById("cartTotal").textContent = "$" + total.toFixed(2);
+  document.getElementById("cartbar").classList.add("show");
+}
+function bump(el) {
+  el.animate([{ transform: "scale(1)" }, { transform: "scale(1.06)" }, { transform: "scale(1)" }], { duration: 220 });
+}
+
+document.getElementById("cartbar").onclick = () => {
+  if (!cart.length) return;
+  const total = cart.reduce((s, x) => s + x.price, 0);
+  const cal = cart.reduce((s, x) => s + x.cal, 0);
+  lastOrder = {
+    items: [...cart], total, cal,
+    market, num: "PH-" + Math.floor(1000 + Math.random() * 9000),
+    date: new Date(),
+  };
+  collectCuisines(lastOrder.items);
+  startTracking("food", { total, cal });
+};
+
+/* ---------- ride ---------- */
+document.getElementById("requestRide").onclick = () => {
+  const base = 11 * RIDES[selRide].mult;
+  startTracking("ride", { total: base, cal: 0 });
+};
+
+/* ---------- tabs ---------- */
+function switchTab(name) {
+  document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("active", x.dataset.tab === name));
+  document.querySelectorAll(".view").forEach(x => x.classList.toggle("active", x.id === name));
+  if (name === "squad") renderTiers();
+}
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => switchTab(b.dataset.tab));
+
+/* ---------- the dopamine engine ---------- */
+const overlay = document.getElementById("overlay");
+const etaNum = document.getElementById("etaNum");
+const bar = document.getElementById("bar");
+const statusEl = document.getElementById("status");
+const ghostBanner = document.getElementById("ghostBanner");
+
+function startTracking(kind, info) {
+  clearInterval(timer);
+  confettiBurst();
+  overlay.classList.add("show");
+  ghostBanner.classList.remove("show");
+
+  const isFood = kind === "food";
+  const isTravel = kind === "travel";
+  const statuses = isTravel ? TRAVEL_STATUS : isFood ? FOOD_STATUS : RIDE_STATUS;
+  const excuses = isTravel ? TRAVEL_EXCUSES : isFood ? FOOD_EXCUSES : RIDE_EXCUSES;
+
+  document.getElementById("trackTitle").textContent = isTravel ? "Trip booked! 🎉" : isFood ? "Order placed! 🎉" : "Ride requested! 🎉";
+  document.getElementById("trackSub").textContent = isTravel
+    ? `${info.label} • $${info.total.toFixed(2)} • boarding shortly (allegedly)`
+    : isFood
+    ? `$${info.total.toFixed(2)} • on its way to your door (in theory)`
+    : `${RIDES[selRide].t} • driver incoming (spiritually)`;
+  document.getElementById("mapWrap").style.display = (kind === "ride") ? "block" : "none";
+  document.getElementById("etaLabel").textContent = isTravel ? "Departs in" : "Estimated arrival";
+  document.getElementById("viewReceipt").style.display = isFood ? "" : "none";
+  setPayChip(info.total);
+
+  let eta = isTravel ? 22 : isFood ? 24 : 4;   // minutes
+  const initialEta = eta;
+  let vMin = 0; // virtual minutes elapsed (used by the IRL speed modes)
+  let progress = 0;
+  let statusIdx = 0;
+  let ghosts = 0;
+  let tick = 0;
+  const car = document.getElementById("car");
+  let carPos = 10;
+
+  etaNum.innerHTML = eta + "<span> min</span>";
+  etaNum.style.color = "var(--text)";
+  statusEl.innerHTML = `<span class="pulse"></span>${statuses[0]}`;
+  bar.style.width = "4%";
+  document.getElementById("waitnote").textContent = "";
+
+  timer = setInterval(() => {
+    tick++;
+
+    // Hope phase: things look great. Progress climbs, ETA drops, car approaches.
+    if (progress < 88) {
+      if (deliverySpeed === "demo") {
+        // Classic demo pacing: a full "delivery" in ~20 seconds.
+        progress += (kind === "ride") ? 12 + Math.random() * 8 : 7 + Math.random() * 6;
+        progress = Math.min(progress, 90);
+        eta = Math.max(1, eta - ((kind === "ride") ? 1 : 2));
+        if (statusIdx < statuses.length - 1 && Math.random() > .4) statusIdx++;
+      } else {
+        // IRL pacing: the ETA elapses in real time (×1), or compressed (×1.5 / ×2).
+        vMin += (1.4 / 60) * deliverySpeed;
+        progress = Math.min(90, (vMin / initialEta) * 100);
+        eta = Math.max(1, Math.ceil(initialEta - vMin));
+        statusIdx = Math.min(statuses.length - 1, Math.floor((progress / 90) * statuses.length));
+      }
+      etaNum.style.color = "var(--accent2)";
+      statusEl.innerHTML = `<span class="pulse"></span>${statuses[statusIdx]}`;
+      if (kind === "ride") { carPos = Math.min(82, 10 + progress * 0.9); car.style.left = carPos + "%"; }
+      vMin = (progress / 100) * initialEta; // keep speed modes continuous if switched mid-delivery
+    } else {
+      // The ghost. So close... then betrayal.
+      ghosts++;
+      stats.ghosted++;
+      const excuse = excuses[Math.floor(Math.random() * excuses.length)];
+      ghostBanner.textContent = "👻 " + excuse;
+      ghostBanner.classList.remove("show"); void ghostBanner.offsetWidth; ghostBanner.classList.add("show");
+      progress = 20 + Math.random() * 30;          // slips back
+      vMin = (progress / 100) * initialEta;        // IRL clock slips back with it
+      eta = deliverySpeed === "demo"
+        ? ((kind === "ride") ? 3 : 8) + Math.floor(Math.random() * 6)   // ETA balloons
+        : Math.max(1, Math.ceil(initialEta - vMin));
+      etaNum.style.color = "var(--warn)";
+      statusEl.innerHTML = `<span class="pulse" style="background:var(--warn)"></span>${excuse}`;
+      if (kind === "ride") { carPos = 12; car.style.left = carPos + "%"; }
+      saveStats();
+      if (ghosts >= 2) {
+        document.getElementById("waitnote").textContent =
+          `You've been ghosted ${ghosts}× this trip. The dopamine is free. The ${isTravel ? "plane" : isFood ? "food" : "driver"} is not coming.`;
+      }
+    }
+
+    bar.style.width = progress + "%";
+    etaNum.innerHTML = eta + "<span> min</span>";
+  }, 1400);
+
+  // bank the "savings" for placing the order
+  stats.saved += info.total;
+  stats.cal += info.cal;
+  saveStats();
+
+  // optionally drop a (never-arriving) plan on your Google Calendar
+  if (gcalToken) {
+    if (isTravel) gcalAddEvent(`✈️ ${info.label} — Phantom flight`, "Boarding shortly. Departs: never. — Phantom", 60, 120);
+    else if (isFood) gcalAddEvent("🍔 Phantom delivery", "On its way (in theory). ETA: never. — Phantom", 0, 45);
+    else gcalAddEvent(`🚗 Phantom ride — ${RIDES[selRide].t}`, "Driver arriving spiritually. — Phantom", 0, 20);
+  }
+}
+
+document.getElementById("closeTrack").onclick = () => {
+  clearInterval(timer);
+  overlay.classList.remove("show");
+  cart = [];
+  document.getElementById("cartbar").classList.remove("show");
+};
+
+/* ---------- stats ---------- */
+function saveStats() {
+  localStorage.setItem("phantomStats", JSON.stringify(stats));
+  document.getElementById("ghostCount").textContent = stats.ghosted;
+  document.getElementById("savedAmt").textContent = "$" + Math.round(stats.saved);
+  document.getElementById("savedCal").textContent = Math.round(stats.cal).toLocaleString();
+}
+saveStats();
+
+/* ---------- wallet (novelty only — never asks for or stores real card data) ---------- */
+let wallet = JSON.parse(localStorage.getItem("phantomWallet") || "[]");
+let defaultId = localStorage.getItem("phantomDefault") || null;
+let cardBrand = "Visa";
+
+const cardPrev = document.getElementById("cardPrev");
+const pvBrand = document.getElementById("pvBrand");
+const pvNum = document.getElementById("pvNum");
+const pvName = document.getElementById("pvName");
+const pvExp = document.getElementById("pvExp");
+const ccName = document.getElementById("ccName");
+
+const fakeLast4 = () => String(Math.floor(1000 + Math.random() * 9000));
+const fakeExp = () => `${String(1 + Math.floor(Math.random() * 12)).padStart(2, "0")} / ${28 + Math.floor(Math.random() * 6)}`;
+
+ccName.addEventListener("input", () => pvName.textContent = ccName.value.toUpperCase() || "YOUR NAME");
+cardPrev.addEventListener("click", () => cardPrev.classList.toggle("flip"));
+
+document.querySelectorAll("#brandSeg button").forEach(b => b.onclick = () => {
+  cardBrand = b.dataset.brand;
+  document.querySelectorAll("#brandSeg button").forEach(x => x.classList.remove("sel"));
+  b.classList.add("sel");
+  pvBrand.textContent = cardBrand.toUpperCase();
+});
+
+// We never request a real card number — a fake one is generated purely for show.
+document.getElementById("mintCard").onclick = () => {
+  const last4 = fakeLast4(), exp = fakeExp();
+  pvBrand.textContent = cardBrand.toUpperCase();
+  pvNum.textContent = `•••• •••• •••• ${last4}`;
+  pvExp.textContent = exp;
+  wallet.push({ id: "m" + Date.now(), type: "card", brand: cardBrand, last4, exp, name: ccName.value || "Phantom User" });
+  if (!defaultId) defaultId = wallet[wallet.length - 1].id;
+  saveWallet(); renderWallet(); confettiBurst();
+  toast("✨ Phantom card minted — it's fake and free");
+};
+
+function shake(el) {
+  el.animate([{ transform: "translateX(0)" }, { transform: "translateX(-7px)" },
+    { transform: "translateX(7px)" }, { transform: "translateX(0)" }], { duration: 300 });
+  el.focus();
+}
+function saveWallet() {
+  localStorage.setItem("phantomWallet", JSON.stringify(wallet));
+  localStorage.setItem("phantomDefault", defaultId || "");
+}
+
+function renderWallet() {
+  const list = document.getElementById("walletList");
+  if (!wallet.length) {
+    list.innerHTML = `<div class="empty">No phantom cards yet — mint one above. They're fake and never charged.</div>`;
+    return;
+  }
+  list.innerHTML = "";
+  wallet.forEach(m => {
+    const isDef = m.id === defaultId;
+    const el = document.createElement("div"); el.className = "wmethod";
+    const label = `${m.brand} (fake)`;
+    const sub = `•••• ${m.last4}${m.exp ? " · exp " + m.exp : ""} · not a real card`;
+    el.innerHTML = `
+      <div class="wic">💳</div>
+      <div class="wmain"><div class="wt">${label}</div><div class="ws">${sub}</div></div>
+      ${isDef ? `<span class="wdef" style="cursor:default">Default</span>` : `<span class="wdef" data-def="${m.id}">Set default</span>`}
+      <button class="wdel" data-del="${m.id}">✕</button>`;
+    list.appendChild(el);
+  });
+  list.querySelectorAll("[data-def]").forEach(s => s.onclick = () => { defaultId = s.dataset.def; saveWallet(); renderWallet(); });
+  list.querySelectorAll("[data-del]").forEach(s => s.onclick = () => {
+    wallet = wallet.filter(x => x.id !== s.dataset.del);
+    if (defaultId === s.dataset.del) defaultId = wallet[0] ? wallet[0].id : null;
+    saveWallet(); renderWallet();
+  });
+}
+renderWallet();
+
+function setPayChip(total) {
+  const chip = document.getElementById("paychip");
+  const def = wallet.find(m => m.id === defaultId) || wallet[0];
+  if (def) {
+    const label = `${def.brand} ••${def.last4}`;
+    chip.innerHTML = `🔒 <b>$0.00</b> charged to ${label} <span class="muted2">· it's a fake card, nothing was billed</span>`;
+  } else {
+    chip.innerHTML = `💳 Placed on your phantom tab · <a href="#" id="goWallet">add a phantom card</a>`;
+    const g = document.getElementById("goWallet");
+    if (g) g.onclick = (e) => { e.preventDefault(); document.getElementById("closeTrack").click(); switchTab("wallet"); };
+  }
+}
+
+function toast(msg) {
+  const t = document.createElement("div"); t.className = "toast"; t.innerHTML = msg;
+  document.body.appendChild(t);
+  requestAnimationFrame(() => t.classList.add("show"));
+  setTimeout(() => { t.classList.remove("show"); setTimeout(() => t.remove(), 320); }, 2600);
+}
+
+/* ---------- squad / tier list ---------- */
+const SQUAD_AVATARS = ["👻","🍕","🌮","🦖","🐉","🤖","🦊","🐙","🧛","🦄","🍔","🥷","🧙","🐧","🦝","🐸"];
+const ME_AVATARS = ["😎","🧑‍🚀","🫅","🦅","🐺","🤠","🧟","👽","🦸","🧝"];
+const TIERS = [
+  { k:"S", label:"Phantom Whale", min:500 },
+  { k:"A", label:"Big Spender", min:250 },
+  { k:"B", label:"Casual Craver", min:100 },
+  { k:"C", label:"Window Shopper", min:30 },
+  { k:"D", label:"Just Browsing", min:0 },
+];
+
+let squad = JSON.parse(localStorage.getItem("phantomSquad") || "null");
+if (squad === null) {
+  squad = [
+    { id:"f1", name:"Lord Ghostmore", av:"👑", spent:610, rate:4 },
+    { id:"f2", name:"Hungry Ghost", av:"👻", spent:420, rate:3 },
+    { id:"f3", name:"Midnight Muncher", av:"🌙", spent:255, rate:2.5 },
+    { id:"f4", name:"Snackzilla", av:"🦖", spent:175, rate:2 },
+    { id:"f5", name:"Broke Baddie", av:"💅", spent:78, rate:1.4 },
+  ];
+}
+let squadSeen = +localStorage.getItem("phantomSquadSeen") || Date.now();
+let myHandle = localStorage.getItem("phantomHandle") || "You";
+let myAvatar = localStorage.getItem("phantomAvatar") || "😎";
+let myInvite = localStorage.getItem("phantomInvite");
+if (!myInvite) {
+  myInvite = "PHANTOM-" + Math.random().toString(36).slice(2, 6).toUpperCase();
+  localStorage.setItem("phantomInvite", myInvite);
+}
+
+function saveSquad() { localStorage.setItem("phantomSquad", JSON.stringify(squad)); }
+function tierOf(spent) { return TIERS.find(t => spent >= t.min) || TIERS[TIERS.length - 1]; }
+function escapeHtml(s) { return String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c])); }
+
+// Friends kept "ordering" while you were away (offline accrual, capped at 12h).
+(function accrueOffline() {
+  const mins = Math.min(720, (Date.now() - squadSeen) / 60000);
+  squad.forEach(f => f.spent += f.rate * mins * (0.6 + Math.random() * 0.8));
+  squadSeen = Date.now();
+  localStorage.setItem("phantomSquadSeen", String(squadSeen));
+  saveSquad();
+})();
+
+const meNameEl = document.getElementById("meName");
+const meAvatarEl = document.getElementById("meAvatar");
+meNameEl.value = myHandle;
+meAvatarEl.textContent = myAvatar;
+document.getElementById("inviteCode").textContent = myInvite;
+
+meNameEl.addEventListener("input", () => { myHandle = meNameEl.value || "You"; localStorage.setItem("phantomHandle", myHandle); renderTiers(); });
+meAvatarEl.onclick = () => {
+  myAvatar = ME_AVATARS[(ME_AVATARS.indexOf(myAvatar) + 1) % ME_AVATARS.length];
+  meAvatarEl.textContent = myAvatar; localStorage.setItem("phantomAvatar", myAvatar); renderTiers();
+};
+document.getElementById("copyInvite").onclick = () => {
+  if (navigator.clipboard) navigator.clipboard.writeText(myInvite);
+  toast("📋 Invite copied — share the void");
+};
+document.getElementById("addFriend").onclick = () => {
+  const input = document.getElementById("friendName");
+  const name = input.value.trim();
+  if (!name) { shake(input); return; }
+  squad.push({ id: "f" + Date.now(), name, av: SQUAD_AVATARS[Math.floor(Math.random() * SQUAD_AVATARS.length)],
+    spent: 20 + Math.random() * 120, rate: 0.8 + Math.random() * 3 });
+  input.value = "";
+  saveSquad(); renderTiers(); confettiBurst();
+  toast("🤝 " + name + " joined your phantom squad");
+};
+
+function renderTiers() {
+  const host = document.getElementById("tierlist");
+  if (!host) return;
+  const me = { id:"me", name: myHandle || "You", av: myAvatar, spent: (typeof stats !== "undefined" ? stats.saved : 0), you:true };
+  const all = [me, ...squad];
+  const leader = all.slice().sort((a, b) => b.spent - a.spent)[0];
+  host.innerHTML = "";
+  TIERS.forEach(t => {
+    const members = all.filter(m => tierOf(m.spent).k === t.k).sort((a, b) => b.spent - a.spent);
+    const row = document.createElement("div");
+    row.className = "tier tier-" + t.k;
+    row.innerHTML = `<div class="tier-label">${t.k}<small>${t.label}</small></div>`;
+    const box = document.createElement("div");
+    box.className = "tier-members";
+    if (!members.length) box.innerHTML = `<div class="tier-empty">— no phantoms here —</div>`;
+    members.forEach(m => {
+      const chip = document.createElement("div");
+      chip.className = "member" + (m.you ? " you" : "");
+      chip.innerHTML = `
+        ${m === leader ? '<span class="crown">👑</span>' : ""}
+        <span class="av">${m.av}</span>
+        <span><div class="mn">${escapeHtml(m.name)}${m.you ? " (you)" : ""}</div><div class="ms">$${Math.round(m.spent)} ghost-spent</div></span>
+        ${m.you ? "" : `<button class="rm" data-rm="${m.id}" title="remove">✕</button>`}`;
+      box.appendChild(chip);
+    });
+    row.appendChild(box);
+    host.appendChild(row);
+  });
+  host.querySelectorAll("[data-rm]").forEach(b => b.onclick = () => {
+    squad = squad.filter(x => x.id !== b.dataset.rm); saveSquad(); renderTiers();
+  });
+}
+renderTiers();
+
+// Live activity — your squad keeps ghost-ordering while you watch.
+setInterval(() => {
+  if (!document.getElementById("squad").classList.contains("active")) return;
+  squad.forEach(f => f.spent += f.rate * (5 / 60) * (0.5 + Math.random()));
+  saveSquad();
+  if (Math.random() < 0.6) renderTiers();
+}, 5000);
+
+/* ---------- travel / maps ---------- */
+const ORIGIN = { x: 250, y: 180 };
+const DEST = [
+  { city: "Tokyo",     code: "TYO", emoji: "🗼", x: 880, y: 195, price: 842,  hrs: "13h 25m" },
+  { city: "Paris",     code: "PAR", emoji: "🥐", x: 545, y: 150, price: 610,  hrs: "7h 40m" },
+  { city: "Bali",      code: "DPS", emoji: "🏝️", x: 835, y: 300, price: 930,  hrs: "19h 10m" },
+  { city: "New York",  code: "JFK", emoji: "🗽", x: 300, y: 178, price: 215,  hrs: "5h 30m" },
+  { city: "Reykjavík", code: "KEF", emoji: "❄️", x: 505, y: 118, price: 430,  hrs: "6h 05m" },
+  { city: "Rio",       code: "GIG", emoji: "🎭", x: 370, y: 330, price: 720,  hrs: "10h 50m" },
+  { city: "Sydney",    code: "SYD", emoji: "🦘", x: 910, y: 360, price: 1180, hrs: "21h 30m" },
+  { city: "Cairo",     code: "CAI", emoji: "🐫", x: 585, y: 215, price: 680,  hrs: "11h 15m" },
+];
+let selTravel = 0;
+
+const destPinsG = document.getElementById("destPins");
+const destRow = document.getElementById("destRow");
+DEST.forEach((d, i) => {
+  const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  g.setAttribute("class", "destpin");
+  g.setAttribute("transform", `translate(${d.x},${d.y})`);
+  g.style.cursor = "pointer";
+  g.innerHTML = `<circle class="dp" r="14"></circle><text class="de" y="6" text-anchor="middle" font-size="18">${d.emoji}</text><text class="dl" y="33" text-anchor="middle" font-size="12">${d.city}</text>`;
+  g.addEventListener("click", () => selectDest(i));
+  destPinsG.appendChild(g);
+
+  const card = document.createElement("div");
+  card.className = "destcard";
+  card.innerHTML = `
+    <div class="destcard-photo"><span class="dce">${d.emoji}</span><img src="${cityPhoto(d.city)}" loading="lazy" alt="${d.city}" onerror="imgFallback(this)"></div>
+    <div class="destcard-body"><div class="dcc">${d.city}</div><div class="dch">${d.hrs} · nonstop</div><div class="dcp">$${d.price}</div></div>`;
+  card.addEventListener("click", () => selectDest(i));
+  destRow.appendChild(card);
+});
+
+function selectDest(i) {
+  selTravel = i;
+  const d = DEST[i];
+  document.querySelectorAll("#destPins .destpin").forEach((p, idx) => p.classList.toggle("sel", idx === i));
+  document.querySelectorAll("#destRow .destcard").forEach((c, idx) => c.classList.toggle("sel", idx === i));
+  const cx = (ORIGIN.x + d.x) / 2, cy = Math.min(ORIGIN.y, d.y) - 70;
+  document.getElementById("flightArc").setAttribute("d", `M ${ORIGIN.x} ${ORIGIN.y} Q ${cx} ${cy} ${d.x} ${d.y}`);
+  document.getElementById("arcLayer").style.opacity = 1;
+  const m = document.getElementById("planeMotion");
+  if (m && m.beginElement) { try { m.beginElement(); } catch (e) {} }
+  renderTripCard(d);
+}
+
+function renderTripCard(d) {
+  const num = 100 + Math.floor(Math.random() * 800);
+  document.getElementById("tripCard").innerHTML = `
+    <div class="bpass">
+      <div class="bp-main">
+        <div class="bp-route">
+          <div class="bp-end"><div class="bp-code">YOU</div><div class="bp-city">Your couch</div></div>
+          <div class="bp-mid">✈️<div class="bp-dur">${d.hrs}</div></div>
+          <div class="bp-end"><div class="bp-code">${d.code}</div><div class="bp-city">${d.city}</div></div>
+        </div>
+        <div class="bp-meta"><span>Flight PH-${num}</span><span>Seat 14C</span><span>Gate —</span><span>Boarding —:—</span></div>
+      </div>
+      <div class="bp-stub">
+        <div class="bp-price">$${d.price}</div>
+        <button class="btn" id="bookTrip">Book phantom trip</button>
+      </div>
+    </div>`;
+  document.getElementById("bookTrip").onclick = () => startTracking("travel", { total: d.price, cal: 0, label: `YOU → ${d.code}` });
+}
+selectDest(0);
+
+/* ---------- Google Calendar (optional) ---------- */
+// Enable by pasting an OAuth Client ID (Web) below:
+//   1. https://console.cloud.google.com/  → create/select a project
+//   2. APIs & Services → Library → enable "Google Calendar API"
+//   3. APIs & Services → Credentials → Create OAuth client ID → "Web application"
+//   4. Under "Authorized JavaScript origins" add your serving origin
+//      (this preview uses  http://localhost:4137  — also add wherever you host it)
+//   5. Paste the Client ID here. Leave "" to keep Calendar off (app still works).
+const GOOGLE_CLIENT_ID = "";
+
+let gcalToken = null;
+let gcalClient = null;
+function gcalReady() { return typeof google !== "undefined" && google.accounts && google.accounts.oauth2; }
+function updateGcalBtn() {
+  const b = document.getElementById("gcalBtn");
+  if (!b) return;
+  b.textContent = gcalToken ? "🗓️ Calendar ✓" : "🗓️ Connect Calendar";
+  b.classList.toggle("on", !!gcalToken);
+}
+function gcalConnect() {
+  if (!GOOGLE_CLIENT_ID) {
+    toast("🗓️ Add a Google Client ID in the code (see comments) to switch Calendar sync on");
+    return;
+  }
+  if (!gcalReady()) { toast("Google sign-in still loading — try again in a sec"); return; }
+  if (!gcalClient) {
+    gcalClient = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: "https://www.googleapis.com/auth/calendar.events",
+      callback: (resp) => {
+        if (resp && resp.access_token) {
+          gcalToken = resp.access_token;
+          updateGcalBtn();
+          toast("🗓️ Google Calendar connected — phantom plans incoming");
+        }
+      },
+    });
+  }
+  gcalClient.requestAccessToken();
+}
+function gcalDisconnect() {
+  if (gcalToken && gcalReady()) google.accounts.oauth2.revoke(gcalToken, () => {});
+  gcalToken = null;
+  updateGcalBtn();
+  toast("🗓️ Calendar disconnected");
+}
+async function gcalAddEvent(title, desc, startMinsFromNow, durationMin) {
+  if (!gcalToken) return;
+  const start = new Date(Date.now() + startMinsFromNow * 60000);
+  const end = new Date(start.getTime() + durationMin * 60000);
+  try {
+    const r = await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + gcalToken, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        summary: title, description: desc,
+        start: { dateTime: start.toISOString() },
+        end: { dateTime: end.toISOString() },
+        colorId: "3",
+      }),
+    });
+    if (r.ok) toast("🗓️ Added to your Google Calendar");
+    else if (r.status === 401) { gcalToken = null; updateGcalBtn(); toast("Calendar session expired — reconnect"); }
+  } catch (e) { toast("Couldn't reach Google Calendar"); }
+}
+document.getElementById("gcalBtn").onclick = () => (gcalToken ? gcalDisconnect() : gcalConnect());
+updateGcalBtn();
+
+/* ---------- first-run novelty disclaimer ---------- */
+function maybeShowIntro() {
+  if (!localStorage.getItem("phantomIntroSeen")) document.getElementById("introOverlay").classList.add("show");
+}
+document.getElementById("introOk").onclick = () => {
+  document.getElementById("introOverlay").classList.remove("show");
+  localStorage.setItem("phantomIntroSeen", "1");
+};
+
+/* ---------- account / login (on-device only — nothing is ever transmitted) ---------- */
+let phantomUser = JSON.parse(localStorage.getItem("phantomUser") || "null");
+let loginCode = "";
+let acctTapAt = 0;
+const loginOv = document.getElementById("loginOverlay");
+
+function renderAcct() {
+  const chip = document.getElementById("acctChip");
+  if (!phantomUser) { chip.style.display = "none"; return; }
+  chip.style.display = "";
+  chip.textContent = phantomUser.guest ? "👻 ghost guest" : "👤 " + phantomUser.email;
+}
+function finishLogin(user) {
+  phantomUser = user;
+  localStorage.setItem("phantomUser", JSON.stringify(user));
+  // adopt the login name as the Squad handle if none was set yet
+  if (!localStorage.getItem("phantomHandle") && user.name) {
+    myHandle = user.name;
+    localStorage.setItem("phantomHandle", myHandle);
+    const mn = document.getElementById("meName");
+    if (mn) mn.value = myHandle;
+    renderTiers();
+  }
+  renderAcct();
+  loginOv.classList.remove("show");
+  confettiBurst();
+  toast(user.guest ? "👻 Haunting as a guest" : "👋 Welcome, " + (user.name || user.email.split("@")[0]) + " — nothing will ever arrive");
+  maybeShowIntro();
+}
+document.getElementById("loginContinue").onclick = () => {
+  const emailEl = document.getElementById("loginEmail");
+  const email = emailEl.value.trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { shake(emailEl); return; }
+  loginCode = String(Math.floor(1000 + Math.random() * 9000));
+  document.getElementById("loginStep1").style.display = "none";
+  document.getElementById("loginStep2").style.display = "block";
+  document.getElementById("loginCodeShow").textContent = loginCode.split("").join(" ");
+  document.getElementById("loginCodeInput").value = loginCode; // never actually emailed — see disclaimer
+};
+document.getElementById("loginVerify").onclick = () => {
+  const codeEl = document.getElementById("loginCodeInput");
+  if (codeEl.value.trim() !== loginCode) { shake(codeEl); return; }
+  finishLogin({ email: document.getElementById("loginEmail").value.trim(), name: document.getElementById("loginName").value.trim() });
+};
+document.getElementById("loginGuest").onclick = () => finishLogin({ guest: true });
+document.getElementById("acctChip").onclick = () => {
+  if (Date.now() - acctTapAt < 3000) {
+    phantomUser = null;
+    localStorage.removeItem("phantomUser");
+    renderAcct();
+    document.getElementById("loginStep1").style.display = "";
+    document.getElementById("loginStep2").style.display = "none";
+    loginOv.classList.add("show");
+    toast("👋 Signed out — your on-device data stays");
+  } else {
+    acctTapAt = Date.now();
+    toast("Tap again to sign out 👋");
+  }
+};
+renderAcct();
+if (phantomUser) maybeShowIntro();
+else loginOv.classList.add("show");
+
+/* ---------- offline support (PWA service worker) ---------- */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  });
+}
+
+/* ---------- phantom receipt + cuisine passport ---------- */
+let lastOrder = null;
+let newStamps = [];
+
+function allCollectible() { return [...CUISINES.map(c => c.name), "NYC Classics", "LA Classics"]; }
+function cuisineEmoji(name) {
+  const c = CUISINES.find(x => x.name === name);
+  if (c) return c.emoji;
+  return MARKET_SECTIONS.NYC.name === name ? MARKET_SECTIONS.NYC.emoji : MARKET_SECTIONS.LA.emoji;
+}
+function collectCuisines(items) {
+  const had = new Set(JSON.parse(localStorage.getItem("phantomCuisines") || "[]"));
+  newStamps = [];
+  items.forEach(it => {
+    if (it.cuisine && !had.has(it.cuisine)) { had.add(it.cuisine); newStamps.push(it.cuisine); }
+  });
+  localStorage.setItem("phantomCuisines", JSON.stringify([...had]));
+}
+
+function renderReceipt(o) {
+  const collected = JSON.parse(localStorage.getItem("phantomCuisines") || "[]");
+  const orderCuisines = [...new Set(o.items.map(i => i.cuisine).filter(Boolean))];
+  const d = new Date(o.date);
+  const pad = n => String(n).padStart(2, "0");
+  const itemRows = o.items.map(it => `
+    <div class="r-row"><span class="r-name">1x ${it.emoji} ${it.name}</span><span>$${it.price.toFixed(2)}</span></div>
+    <div class="r-cuisine">↳ ${cuisineEmoji(it.cuisine)} ${it.cuisine} cuisine</div>`).join("");
+  const stamps = orderCuisines.map(c =>
+    `<span class="${newStamps.includes(c) ? "new" : ""}">${cuisineEmoji(c)} ${c}${newStamps.includes(c) ? " ★NEW" : ""}</span>`).join("");
+  document.getElementById("receiptPaper").innerHTML = `
+    <div class="r-center">
+      <div class="r-logo">👻</div>
+      <div class="r-title">PHANTOM EATS</div>
+      <div class="r-sub">${MARKETS[o.market].emoji} ${MARKETS[o.market].name} · est. never</div>
+      <div class="r-sub">ORDER #${o.num} · ${pad(d.getMonth()+1)}/${pad(d.getDate())}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}</div>
+    </div>
+    <div class="r-dash"></div>
+    ${itemRows}
+    <div class="r-dash"></div>
+    <div class="r-row"><span>Subtotal</span><span class="r-strike">$${o.total.toFixed(2)}</span></div>
+    <div class="r-row"><span>Phantom fee</span><span>$0.00</span></div>
+    <div class="r-row"><span>Delivery (${(Math.random()*900+100).toFixed(0)} mi, on foot)</span><span>$0.00</span></div>
+    <div class="r-row"><span>Ghost gratuity 👻</span><span>$0.00</span></div>
+    <div class="r-dash"></div>
+    <div class="r-row r-total"><span>TOTAL CHARGED</span><span class="r-free">$0.00</span></div>
+    <div class="r-row"><span>You "saved"</span><span>$${o.total.toFixed(2)} · ${o.cal.toLocaleString()} cal</span></div>
+    <div class="r-dash"></div>
+    <div class="r-passport">
+      <div class="r-passport-title">— CUISINE PASSPORT —</div>
+      <div class="r-stamps">${stamps || "<span>no cuisines this time</span>"}</div>
+      <div class="r-progress">${collected.length} / ${allCollectible().length} cuisines collected all-time</div>
+    </div>
+    <div class="r-barcode"></div>
+    <div class="r-barcode-label">*NEVER·ARRIVING*</div>
+    <div class="r-dash"></div>
+    <div class="r-center r-sub">ETA: eventually™ · driver: spectral<br/>thank you for ordering nothing!</div>`;
+}
+
+document.getElementById("viewReceipt").onclick = () => {
+  if (!lastOrder) return;
+  renderReceipt(lastOrder);
+  document.getElementById("receiptOverlay").classList.add("show");
+};
+document.getElementById("closeReceipt").onclick = () => document.getElementById("receiptOverlay").classList.remove("show");
+document.getElementById("receiptOverlay").addEventListener("click", (e) => {
+  if (e.target === document.getElementById("receiptOverlay")) document.getElementById("receiptOverlay").classList.remove("show");
+});
+
+/* ---------- delivery speed (demo / 1× IRL / 1.5× / 2×) ---------- */
+let deliverySpeed = JSON.parse(localStorage.getItem("phantomSpeed") || '"demo"');
+function renderSpeedChips() {
+  document.querySelectorAll("#speedRow .spd").forEach(b => {
+    const v = b.dataset.spd === "demo" ? "demo" : parseFloat(b.dataset.spd);
+    b.classList.toggle("sel", v === deliverySpeed);
+    b.onclick = () => {
+      deliverySpeed = v;
+      localStorage.setItem("phantomSpeed", JSON.stringify(v));
+      renderSpeedChips();
+      toast(v === "demo" ? "👻 Demo speed — ghosted in seconds" : `⏱️ ${v}× speed — this now takes ${v === 1 ? "the actual" : "real"} time (÷${v})`);
+    };
+  });
+}
+renderSpeedChips();
+
+/* ---------- pop-up ads (placeholder slots — swap in a real ad network later) ---------- */
+// To monetize later: keep .ad-pop as the container, and replace showAd()'s body
+// (or the ADS array) with your ad SDK's render call. Everything else stays.
+const ADS_CONFIG = { enabled: true, firstDelayMs: 25000, minGapMs: 50000, maxGapMs: 100000, autoHideMs: 12000 };
+const ADS = [
+  { emoji: "📦", title: "Phantom Prime", line: "Free non-delivery on every order. Cancel never.", cta: "Start not receiving" },
+  { emoji: "👟", title: "Ghost Runners", line: "Shoes engineered for places you'll never go.", cta: "Walk nowhere →" },
+  { emoji: "🥤", title: "Ecto-Cola Zero", line: "Zero sugar. Zero cola. Zero chance it arrives.", cta: "Taste nothing" },
+  { emoji: "🛋️", title: "CouchMiles™", line: "Earn 1 mile for every hour you don't leave home.", cta: "Redeem miles" },
+  { emoji: "💪", title: "Ghost Protein", line: "Gains you'll never see. 0g per serving.", cta: "Bulk up (spiritually)" },
+  { emoji: "🧘", title: "MediGhost", line: "Guided meditation for waiting on orders forever.", cta: "Breathe in, nothing out" },
+];
+let adTimer = null;
+
+function showAd(ad) {
+  if (!ad) ad = ADS[Math.floor(Math.random() * ADS.length)];
+  dismissAd(); // one at a time
+  const el = document.createElement("div");
+  el.className = "ad-pop";
+  el.id = "adPop";
+  el.innerHTML = `
+    <span class="ad-badge">AD</span>
+    <button class="ad-x" title="close">✕</button>
+    <div class="ad-body">
+      <div class="ad-emoji">${ad.emoji}</div>
+      <div><div class="ad-title">${ad.title}</div><div class="ad-line">${ad.line}</div></div>
+    </div>
+    <button class="ad-cta">${ad.cta}</button>`;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add("show"));
+  el.querySelector(".ad-x").onclick = dismissAd;
+  el.querySelector(".ad-cta").onclick = () => { dismissAd(); toast("👻 This ad space is for rent (placeholder)"); };
+  el._hide = setTimeout(dismissAd, ADS_CONFIG.autoHideMs);
+}
+function dismissAd() {
+  const el = document.getElementById("adPop");
+  if (!el) return;
+  clearTimeout(el._hide);
+  el.classList.remove("show");
+  setTimeout(() => el.remove(), 380);
+}
+function scheduleAd(delay) {
+  if (!ADS_CONFIG.enabled) return;
+  clearTimeout(adTimer);
+  adTimer = setTimeout(() => {
+    showAd();
+    scheduleAd(ADS_CONFIG.minGapMs + Math.random() * (ADS_CONFIG.maxGapMs - ADS_CONFIG.minGapMs));
+  }, delay);
+}
+scheduleAd(ADS_CONFIG.firstDelayMs);
+
+/* ---------- confetti ---------- */
+function confettiBurst() {
+  const chars = ["🎉","✨","🍔","🚗","👻","💸","🥳"];
+  for (let i = 0; i < 26; i++) {
+    const c = document.createElement("div");
+    c.className = "confetti";
+    c.textContent = chars[Math.floor(Math.random() * chars.length)];
+    c.style.left = Math.random() * 100 + "vw";
+    c.style.animationDuration = (1.6 + Math.random() * 1.4) + "s";
+    c.style.fontSize = (14 + Math.random() * 18) + "px";
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 3200);
+  }
+}
+</script>
+</body>
+</html>
