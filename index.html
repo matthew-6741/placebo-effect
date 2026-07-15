@@ -30,6 +30,33 @@
     --danger: #ff5c7c;
     --shadow: 0 18px 50px rgba(0,0,0,.45);
     --r: 18px;
+    --grad2: #9b5cff;
+    --glow: var(--glow);
+    --accent-soft: var(--accent-soft);
+    --overlay-bg: rgba(6,7,16,.78);
+  }
+  /* Light theme: white / red / gold (matches the app icon) */
+  body.light {
+    --bg: #fbf6ef;
+    --bg2: #f5ece0;
+    --card: #ffffff;
+    --card2: #fff8ee;
+    --line: #e9dcc8;
+    --text: #2b211b;
+    --muted: #97836d;
+    --accent: #d0342c;
+    --accent2: #b8860b;
+    --warn: #d97706;
+    --danger: #c92a2a;
+    --shadow: 0 14px 34px rgba(96,44,20,.14);
+    --grad2: #e8972e;
+    --glow: rgba(208,52,44,.28);
+    --accent-soft: rgba(208,52,44,.10);
+    --overlay-bg: rgba(72,32,14,.42);
+    background:
+      radial-gradient(1200px 700px at 80% -10%, #f9e1c4 0%, transparent 60%),
+      radial-gradient(900px 600px at -10% 10%, #fbe4da 0%, transparent 55%),
+      var(--bg);
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
@@ -52,9 +79,9 @@
   .brand { display: flex; align-items: center; gap: 12px; }
   .logo {
     width: 44px; height: 44px; border-radius: 13px;
-    background: linear-gradient(135deg, var(--accent), #b463ff);
+    background: linear-gradient(135deg, var(--accent), var(--grad2));
     display: grid; place-items: center; font-size: 24px;
-    box-shadow: 0 8px 22px rgba(124,92,255,.5);
+    box-shadow: 0 8px 22px var(--glow);
   }
   .brand h1 { font-size: 20px; margin: 0; letter-spacing: .2px; }
   .brand p { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
@@ -74,7 +101,7 @@
     padding: 10px 22px; border-radius: 999px; font-size: 14px; font-weight: 600;
     cursor: pointer; transition: .2s; font-family: inherit;
   }
-  .tabs button.active { background: var(--accent); color: #fff; box-shadow: 0 6px 16px rgba(124,92,255,.45); }
+  .tabs button.active { background: var(--accent); color: #fff; box-shadow: 0 6px 16px var(--glow); }
 
   .view { display: none; animation: fade .35s ease; }
   .view.active { display: block; }
@@ -104,9 +131,9 @@
   /* Cart bar */
   .cartbar {
     position: sticky; bottom: 16px; margin-top: 20px;
-    background: linear-gradient(135deg, var(--accent), #9b5cff);
+    background: linear-gradient(135deg, var(--accent), var(--grad2));
     border-radius: 16px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between;
-    box-shadow: 0 14px 34px rgba(124,92,255,.5); cursor: pointer; transition: .2s;
+    box-shadow: 0 14px 34px var(--glow); cursor: pointer; transition: .2s;
     opacity: 0; transform: translateY(20px); pointer-events: none;
   }
   .cartbar.show { opacity: 1; transform: none; pointer-events: auto; }
@@ -133,7 +160,7 @@
     text-align: center; cursor: pointer; transition: .15s;
   }
   .rt:hover { border-color: var(--accent); }
-  .rt.sel { border-color: var(--accent); background: rgba(124,92,255,.14); }
+  .rt.sel { border-color: var(--accent); background: var(--accent-soft); }
   .rt-photo { position: relative; height: 56px; border-radius: 9px; overflow: hidden; margin-bottom: 8px; display: grid; place-items: center; background: linear-gradient(135deg, var(--card2), var(--card)); }
   .rt-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
   .rt .ic { font-size: 28px; }
@@ -143,8 +170,8 @@
   .btn {
     width: 100%; border: 0; border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 800;
     cursor: pointer; font-family: inherit; color: #fff;
-    background: linear-gradient(135deg, var(--accent), #9b5cff);
-    box-shadow: 0 10px 26px rgba(124,92,255,.45); transition: .15s;
+    background: linear-gradient(135deg, var(--accent), var(--grad2));
+    box-shadow: 0 10px 26px var(--glow); transition: .15s;
   }
   .btn:hover { filter: brightness(1.07); }
   .btn:active { transform: scale(.98); }
@@ -152,7 +179,7 @@
 
   /* Tracking modal */
   .overlay {
-    position: fixed; inset: 0; background: rgba(6,7,16,.78); backdrop-filter: blur(6px);
+    position: fixed; inset: 0; background: var(--overlay-bg); backdrop-filter: blur(6px);
     display: none; align-items: center; justify-content: center; padding: 18px; z-index: 50;
   }
   .overlay.show { display: flex; animation: fade .25s; }
@@ -268,7 +295,7 @@
   .tier-D .tier-label { background: linear-gradient(135deg, #aab0d4, #7b82ad); }
   .tier-members { flex: 1; display: flex; flex-wrap: wrap; gap: 8px; padding: 10px; min-height: 66px; align-content: center; }
   .member { display: flex; align-items: center; gap: 9px; background: var(--bg2); border: 1px solid var(--line); border-radius: 11px; padding: 6px 10px 6px 10px; position: relative; }
-  .member.you { border-color: var(--accent); background: rgba(124,92,255,.16); box-shadow: 0 0 0 1px var(--accent) inset; }
+  .member.you { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 1px var(--accent) inset; }
   .member .av { font-size: 20px; }
   .member .mn { font-weight: 700; font-size: 13px; line-height: 1.1; }
   .member .ms { font-size: 11px; color: var(--accent2); margin-top: 1px; }
@@ -327,7 +354,7 @@
   .market-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
   .market-toggle { display: flex; gap: 6px; background: var(--bg2); border: 1px solid var(--line); border-radius: 999px; padding: 5px; }
   .market-toggle button { border: 0; background: transparent; color: var(--muted); padding: 9px 20px; border-radius: 999px; font-weight: 700; font-size: 14px; cursor: pointer; font-family: inherit; transition: .15s; }
-  .market-toggle button.sel { background: var(--accent); color: #fff; box-shadow: 0 6px 16px rgba(124,92,255,.4); }
+  .market-toggle button.sel { background: var(--accent); color: #fff; box-shadow: 0 6px 16px var(--glow); }
   .market-info { font-size: 12px; color: var(--muted); }
   .market-info b { color: var(--text); }
   .cat-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 8px; }
@@ -393,7 +420,7 @@
   .ad-pop .ad-emoji { font-size: 34px; line-height: 1; }
   .ad-pop .ad-title { font-weight: 800; font-size: 13.5px; }
   .ad-pop .ad-line { font-size: 11px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
-  .ad-pop .ad-cta { margin-top: 10px; width: 100%; border: 0; border-radius: 9px; padding: 8px; font-size: 12px; font-weight: 800; cursor: pointer; font-family: inherit; color: #fff; background: linear-gradient(135deg, var(--accent), #9b5cff); }
+  .ad-pop .ad-cta { margin-top: 10px; width: 100%; border: 0; border-radius: 9px; padding: 8px; font-size: 12px; font-weight: 800; cursor: pointer; font-family: inherit; color: #fff; background: linear-gradient(135deg, var(--accent), var(--grad2)); }
   .ad-pop .ad-cta:hover { filter: brightness(1.08); }
 
   footer { text-align:center; color: var(--muted); font-size: 11px; margin-top: 34px; line-height: 1.6; }
@@ -410,6 +437,7 @@
       </div>
     </div>
     <div class="ghost-counter">
+      <button id="themeBtn" class="gcal-btn" title="switch theme">🌙 Dark</button>
       <button id="acctChip" class="gcal-btn" style="display:none" title="tap twice to sign out"></button>
       <button id="gcalBtn" class="gcal-btn">🗓️ Connect Calendar</button>
       <div><b id="ghostCount">0</b> times ghosted</div>
@@ -1777,6 +1805,21 @@ document.getElementById("closeReceipt").onclick = () => document.getElementById(
 document.getElementById("receiptOverlay").addEventListener("click", (e) => {
   if (e.target === document.getElementById("receiptOverlay")) document.getElementById("receiptOverlay").classList.remove("show");
 });
+
+/* ---------- theme (light: white/red/gold · dark: classic purple) ---------- */
+let theme = localStorage.getItem("phantomTheme") || "light";
+function applyTheme() {
+  document.body.classList.toggle("light", theme === "light");
+  document.getElementById("themeBtn").textContent = theme === "light" ? "🌙 Dark" : "☀️ Light";
+  const mc = document.querySelector('meta[name="theme-color"]');
+  if (mc) mc.content = theme === "light" ? "#fbf6ef" : "#0e0f1a";
+}
+document.getElementById("themeBtn").onclick = () => {
+  theme = theme === "light" ? "dark" : "light";
+  localStorage.setItem("phantomTheme", theme);
+  applyTheme();
+};
+applyTheme();
 
 /* ---------- delivery speed (demo / 1× IRL / 1.5× / 2×) ---------- */
 let deliverySpeed = JSON.parse(localStorage.getItem("phantomSpeed") || '"demo"');
