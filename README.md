@@ -1,8 +1,8 @@
-# 👻 Phantom
+# 👻 The Placebo Effect
 
 **Order the dopamine — skip the delivery.**
 
-Phantom is a novelty entertainment web app: a fake food-delivery / ride / travel
+The Placebo Effect (formerly "Phantom") is a novelty entertainment web app: a fake food-delivery / ride / travel
 app where you get the full satisfying ordering experience, but **nothing ever
 arrives — by design**. No real money moves, no real card data is ever collected,
 and 100% of orders are ghosted. That's the feature, not the bug.

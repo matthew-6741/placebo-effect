@@ -1,6 +1,6 @@
 {
-  "name": "Phantom — order the dopamine, skip the delivery",
-  "short_name": "Phantom",
+  "name": "The Placebo Effect — order the dopamine, skip the delivery",
+  "short_name": "Placebo",
   "description": "A placebo novelty app: place food/ride/travel orders that never arrive, just for the dopamine. Entertainment only.",
   "start_url": "./index.html",
   "scope": "./",
