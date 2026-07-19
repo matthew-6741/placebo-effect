@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Placebo Effect — Promo</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #000; overflow: hidden;
+  }
+  .stage {
+    position: fixed; inset: 0; display: grid; place-items: center; overflow: hidden;
+    background: #0e0f1a; transition: background 1s ease;
+  }
+  .stage.warm {
+    background: radial-gradient(1100px 700px at 75% -10%, #f9e1c4 0%, transparent 60%),
+                radial-gradient(900px 600px at -10% 15%, #fbe4da 0%, transparent 55%), #fbf6ef;
+  }
+  .scene {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center; padding: 4vmin;
+    opacity: 0; transform: translateY(3vmin) scale(.98); pointer-events: none;
+    transition: opacity .7s ease, transform .7s ease;
+  }
+  .scene.on { opacity: 1; transform: none; pointer-events: auto; }
+
+  .big { font-size: 7.5vmin; font-weight: 900; letter-spacing: -.02em; color: #eef0ff; line-height: 1.15; }
+  .warm .big, .warm .mid { color: #2b211b; }
+  .mid { font-size: 4vmin; font-weight: 700; color: #9aa0c7; margin-top: 2vmin; }
+  .red { color: #d0342c; } .gold { color: #b8860b; } .purple { color: #7c5cff; }
+
+  .pop { opacity: 0; animation: pop .6s cubic-bezier(.2,.9,.3,1.3) forwards; }
+  .scene:not(.on) .pop { animation: none; }
+  @keyframes pop { from { opacity: 0; transform: translateY(4vmin) scale(.9); } to { opacity: 1; transform: none; } }
+  .d1 { animation-delay: .1s } .d2 { animation-delay: .9s } .d3 { animation-delay: 1.7s } .d4 { animation-delay: 2.5s } .d5 { animation-delay: 3.3s }
+
+  .appicon { width: 22vmin; height: 22vmin; border-radius: 5vmin; box-shadow: 0 3vmin 8vmin rgba(160,40,20,.35); }
+
+  .cards { display: flex; gap: 2.5vmin; margin-top: 4vmin; }
+  .foodcard { width: 26vmin; background: #fff; border-radius: 2.2vmin; overflow: hidden; box-shadow: 0 2vmin 5vmin rgba(96,44,20,.18); text-align: left; }
+  .foodcard img { width: 100%; height: 17vmin; object-fit: cover; display: block; }
+  .foodcard .n { font-weight: 800; font-size: 2.2vmin; color: #2b211b; padding: 1.4vmin 1.6vmin .2vmin; }
+  .foodcard .p { font-weight: 900; font-size: 2.4vmin; color: #b8860b; padding: 0 1.6vmin 1.6vmin; }
+
+  .panel { background: #fff; border-radius: 2.6vmin; box-shadow: 0 2vmin 6vmin rgba(96,44,20,.18); padding: 3.5vmin 4.5vmin; min-width: 52vmin; }
+  .panel .t { font-size: 3.6vmin; font-weight: 900; color: #2b211b; }
+  .panel .s { font-size: 2.3vmin; color: #97836d; margin-top: .6vmin; }
+  .eta { font-size: 9vmin; font-weight: 900; color: #1a9b6c; margin: 1.5vmin 0; transition: color .4s; }
+  .bar { height: 1.4vmin; background: #f0e6d6; border-radius: 99px; overflow: hidden; margin: 1vmin 0 2vmin; }
+  .bar > div { height: 100%; width: 5%; border-radius: 99px; background: linear-gradient(90deg, #1a9b6c, #d0342c); }
+  .on .bar > div { animation: fill 3.2s ease forwards; }
+  @keyframes fill { 0% { width: 5% } 70% { width: 88% } 85% { width: 88% } 100% { width: 26% } }
+  .ghostline { display: inline-block; background: #fdeaea; border: 1px solid #f0b9b4; color: #b3382f; font-weight: 700;
+    border-radius: 1.6vmin; padding: 1.2vmin 2vmin; font-size: 2.4vmin; opacity: 0; }
+  .on .ghostline { animation: pop .5s 3.4s cubic-bezier(.2,.9,.3,1.3) forwards, shake .5s 3.9s; }
+  @keyframes shake { 25% { transform: translateX(-1vmin) } 75% { transform: translateX(1vmin) } }
+
+  .receipt { font-family: ui-monospace, Menlo, monospace; background: #faf7ef; color: #2a2721; border-radius: .6vmin;
+    padding: 3.5vmin 4vmin; box-shadow: 0 2vmin 6vmin rgba(96,44,20,.22); text-align: left; min-width: 46vmin; }
+  .receipt .rrow { display: flex; justify-content: space-between; gap: 6vmin; font-size: 2.4vmin; padding: .5vmin 0; }
+  .receipt .dash { border-top: 2px dashed #b8b0a2; margin: 1.2vmin 0; }
+  .receipt .total { font-size: 3.2vmin; font-weight: 900; }
+  .receipt .free { color: #1a7f4e; }
+  .stamps { display: flex; gap: 1vmin; margin-top: 1.5vmin; flex-wrap: wrap; }
+  .stamps span { border: 2px solid #2a2721; border-radius: 99px; padding: .5vmin 1.5vmin; font-size: 1.9vmin; font-weight: 700; }
+
+  .punch { font-size: 9vmin; font-weight: 900; letter-spacing: -.02em; color: #2b211b; line-height: 1.2; }
+
+  .cta-name { font-size: 8vmin; font-weight: 900; color: #2b211b; margin-top: 3vmin; letter-spacing: -.02em; }
+  .cta-tag { font-size: 3.2vmin; color: #97836d; font-weight: 700; margin-top: 1vmin; }
+  .urlchip { margin-top: 3.5vmin; background: #d0342c; color: #fff; font-weight: 800; font-size: 2.6vmin;
+    border-radius: 99px; padding: 1.6vmin 3.6vmin; box-shadow: 0 1.5vmin 4vmin rgba(208,52,44,.35); }
+  .replay { margin-top: 2.5vmin; background: none; border: 2px solid #e0d2bd; color: #97836d; font-weight: 800;
+    font-size: 2.2vmin; border-radius: 99px; padding: 1.2vmin 3vmin; cursor: pointer; font-family: inherit; }
+  .replay:hover { border-color: #d0342c; color: #d0342c; }
+
+  .confetti { position: absolute; top: -5vmin; font-size: 3vmin; pointer-events: none; animation: fall linear forwards; }
+  @keyframes fall { to { transform: translateY(115vh) rotate(560deg); opacity: 0; } }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+
+  <!-- 1 · hook -->
+  <section class="scene" data-dur="4600">
+    <div class="big pop d1">You're hungry. 😩</div>
+    <div class="big pop d2">Delivery is <span class="red">$47</span>.</div>
+    <div class="mid pop d3">What if you could skip… all of it?</div>
+  </section>
+
+  <!-- 2 · logo -->
+  <section class="scene" data-dur="4600" data-warm>
+    <img class="appicon pop d1" src="icons/icon-512.png" alt="" />
+    <div class="cta-name pop d2">The Placebo Effect</div>
+    <div class="cta-tag pop d3">Order the dopamine. Skip the delivery.</div>
+  </section>
+
+  <!-- 3 · browse -->
+  <section class="scene" data-dur="5200" data-warm>
+    <div class="big pop d1" style="font-size:5.5vmin">23 cuisines. Real photos.<br/><span class="red">Zero real food.</span></div>
+    <div class="cards">
+      <div class="foodcard pop d2"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/New_York_Pizza_Slices.png/500px-New_York_Pizza_Slices.png" alt=""/><div class="n">$1 Dollar Slice</div><div class="p">$1.00</div></div>
+      <div class="foodcard pop d3"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/001_Tacos_de_carnitas%2C_carne_asada_y_al_pastor.jpg/500px-001_Tacos_de_carnitas%2C_carne_asada_y_al_pastor.jpg" alt=""/><div class="n">Tacos al Pastor</div><div class="p">$13.50</div></div>
+      <div class="foodcard pop d4"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Jollof_rice_with_vegetable.jpg/500px-Jollof_rice_with_vegetable.jpg" alt=""/><div class="n">Jollof Rice</div><div class="p">$12.00</div></div>
+    </div>
+  </section>
+
+  <!-- 4 · the ghost -->
+  <section class="scene" data-dur="6200" data-warm data-confetti>
+    <div class="panel pop d1">
+      <div class="t">Order placed! 🎉</div>
+      <div class="s">$28.50 · on its way to your door (in theory)</div>
+      <div class="eta" id="eta">12 min</div>
+      <div class="bar"><div></div></div>
+      <div class="ghostline">👻 Driver swears they're "right around the corner"</div>
+    </div>
+  </section>
+
+  <!-- 5 · receipt -->
+  <section class="scene" data-dur="5600" data-warm>
+    <div class="receipt pop d1">
+      <div class="rrow"><b>👻 PHANTOM EATS</b><span>#PH-4410</span></div>
+      <div class="dash"></div>
+      <div class="rrow"><span>Subtotal</span><s>$28.50</s></div>
+      <div class="rrow"><span>Ghost gratuity</span><span>$0.00</span></div>
+      <div class="dash"></div>
+      <div class="rrow total"><span>TOTAL CHARGED</span><span class="free">$0.00</span></div>
+      <div class="rrow"><span>You "saved"</span><b>$28.50 · 1,900 cal</b></div>
+      <div class="stamps"><span>🌮 Mexican ★</span><span>🍜 Thai ★</span><span>🗽 NYC ★</span></div>
+    </div>
+    <div class="mid pop d3" style="font-size:3.4vmin">Collect all <b class="red">25 cuisines</b>. Pay <b class="gold">$0. Forever.</b></div>
+  </section>
+
+  <!-- 6 · punchline -->
+  <section class="scene" data-dur="5400" data-warm>
+    <div class="punch pop d1">No fees.</div>
+    <div class="punch pop d2">No calories.</div>
+    <div class="punch pop d3">No food. 😌</div>
+    <div class="punch pop d4 red">100% placebo.</div>
+  </section>
+
+  <!-- 7 · CTA -->
+  <section class="scene" data-warm data-confetti>
+    <img class="appicon pop d1" src="icons/icon-512.png" alt="" />
+    <div class="cta-name pop d2">The Placebo Effect</div>
+    <div class="cta-tag pop d3">Free forever. Delivers never. 👻</div>
+    <div class="urlchip pop d4">Play it now — nothing will arrive</div>
+    <button class="replay pop d5" onclick="play()">↺ Replay</button>
+  </section>
+
+</div>
+
+<script>
+const scenes = [...document.querySelectorAll(".scene")];
+const stage = document.getElementById("stage");
+let timers = [];
+
+function confettiBurst() {
+  const chars = ["🎉","✨","🍕","🌮","👻","💸"];
+  for (let i = 0; i < 22; i++) {
+    const c = document.createElement("div");
+    c.className = "confetti";
+    c.textContent = chars[Math.floor(Math.random() * chars.length)];
+    c.style.left = Math.random() * 100 + "vw";
+    c.style.animationDuration = (1.8 + Math.random() * 1.6) + "s";
+    stage.appendChild(c);
+    setTimeout(() => c.remove(), 3600);
+  }
+}
+
+function showScene(i) {
+  scenes.forEach((s, k) => s.classList.toggle("on", k === i));
+  stage.classList.toggle("warm", scenes[i].hasAttribute("data-warm"));
+  if (scenes[i].hasAttribute("data-confetti")) confettiBurst();
+  if (scenes[i].querySelector("#eta")) runEta();
+}
+
+function runEta() {
+  const el = document.getElementById("eta");
+  const seq = [["12 min","#1a9b6c",0],["6 min","#1a9b6c",1100],["2 min","#1a9b6c",2200],["1 min","#1a9b6c",3000],["∞ min","#d0342c",3600]];
+  seq.forEach(([txt, col, at]) => timers.push(setTimeout(() => { el.textContent = txt; el.style.color = col; }, at)));
+}
+
+function play() {
+  timers.forEach(clearTimeout); timers = [];
+  let t = 300;
+  scenes.forEach((s, i) => {
+    timers.push(setTimeout(() => showScene(i), t));
+    t += +(s.dataset.dur || 0);
+  });
+}
+window.jumpTo = (i) => { timers.forEach(clearTimeout); timers = []; showScene(i); }; // for testing
+play();
+</script>
+</body>
+</html>
