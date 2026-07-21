@@ -305,9 +305,23 @@
   .tier-empty { color: var(--muted); font-size: 12px; opacity: .55; padding: 4px 6px; }
 
   /* Travel / map */
-  .map-panel { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 10px; box-shadow: var(--shadow); margin-bottom: 16px; }
-  .worldmap { width: 100%; height: auto; display: block; border-radius: 12px;
+  .map-panel { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 10px; box-shadow: var(--shadow); margin-bottom: 16px; position: relative; }
+  .worldmap { width: 100%; height: auto; display: block; border-radius: 12px; touch-action: none; cursor: grab; user-select: none;
     background: radial-gradient(700px 360px at 50% 42%, rgba(124,92,255,.10), transparent 70%), var(--bg2); }
+  .worldmap.grabbing { cursor: grabbing; }
+  .zoom-ctl { position: absolute; right: 20px; bottom: 20px; display: flex; flex-direction: column; gap: 6px; }
+  .zoom-ctl button {
+    width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--line); background: var(--card2);
+    color: var(--text); font-size: 17px; font-weight: 800; cursor: pointer; font-family: inherit;
+    box-shadow: var(--shadow); transition: .15s;
+  }
+  .zoom-ctl button:hover { border-color: var(--accent); color: var(--accent); }
+  .zoom-ctl button:active { transform: scale(.92); }
+  .zoom-ctl button#zoomReset { font-size: 15px; }
+  .zoom-hint { position: absolute; left: 20px; bottom: 20px; font-size: 11px; color: var(--muted);
+    background: var(--card2); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px;
+    pointer-events: none; opacity: .9; }
+  @media (max-width: 640px) { .zoom-hint { display: none; } }
   .mapimg { filter: saturate(.85) brightness(.92); opacity: .92; }
   body.light .mapimg { filter: saturate(.9) brightness(1.03) contrast(1.02); opacity: 1; }
   .farc { fill: none; stroke: url(#arcGrad); stroke-width: 2.5; stroke-dasharray: 6 6; animation: dash 1s linear infinite; filter: drop-shadow(0 0 2px rgba(0,0,0,.5)); }
@@ -565,23 +579,31 @@
           </linearGradient>
         </defs>
         <!-- Real world map (equirectangular, public domain via Wikimedia Commons) -->
-        <image class="mapimg" href="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/World_location_map_%28equirectangular_180%29.svg/1920px-World_location_map_%28equirectangular_180%29.svg.png"
-               x="0" y="0" width="1000" height="500" preserveAspectRatio="none" />
-        <g id="arcLayer" style="opacity:0">
-          <path id="flightArc" class="farc" d="" />
-          <text id="plane" class="plane" font-size="22">✈️
-            <animateMotion id="planeMotion" dur="3.4s" repeatCount="indefinite" keyPoints="0;0.82;0" keyTimes="0;0.7;1" calcMode="linear">
-              <mpath href="#flightArc" />
-            </animateMotion>
-          </text>
+        <g id="mapZoom">
+          <image class="mapimg" href="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/World_location_map_%28equirectangular_180%29.svg/1920px-World_location_map_%28equirectangular_180%29.svg.png"
+                 x="0" y="0" width="1000" height="500" preserveAspectRatio="none" />
+          <g id="arcLayer" style="opacity:0">
+            <path id="flightArc" class="farc" d="" />
+            <text id="plane" class="plane" font-size="22">✈️
+              <animateMotion id="planeMotion" dur="3.4s" repeatCount="indefinite" keyPoints="0;0.82;0" keyTimes="0;0.7;1" calcMode="linear">
+                <mpath href="#flightArc" />
+              </animateMotion>
+            </text>
+          </g>
+          <g class="origin" transform="translate(294,137)">
+            <circle class="opulse" r="4"><animate attributeName="r" values="4;18" dur="1.7s" repeatCount="indefinite" /><animate attributeName="opacity" values=".55;0" dur="1.7s" repeatCount="indefinite" /></circle>
+            <circle r="4.5" />
+            <text y="-12" class="olabel" text-anchor="middle">Your couch</text>
+          </g>
+          <g id="destPins"></g>
         </g>
-        <g class="origin" transform="translate(294,137)">
-          <circle class="opulse" r="4"><animate attributeName="r" values="4;18" dur="1.7s" repeatCount="indefinite" /><animate attributeName="opacity" values=".55;0" dur="1.7s" repeatCount="indefinite" /></circle>
-          <circle r="4.5" />
-          <text y="-12" class="olabel" text-anchor="middle">Your couch</text>
-        </g>
-        <g id="destPins"></g>
       </svg>
+      <div class="zoom-ctl">
+        <button id="zoomIn" title="zoom in">+</button>
+        <button id="zoomOut" title="zoom out">−</button>
+        <button id="zoomReset" title="reset view">⟲</button>
+      </div>
+      <div class="zoom-hint">🔍 scroll, pinch, or drag to explore</div>
     </div>
 
     <div class="dest-row" id="destRow"></div>
@@ -1655,6 +1677,118 @@ document.querySelectorAll("#classSeg button").forEach(b => b.onclick = () => {
   renderTripCard(DEST[selTravel]); // re-price the boarding pass
 });
 selectDest(0);
+
+/* ---------- map pan / zoom (wheel, drag, pinch) ---------- */
+(function mapZoomEngine() {
+  const svg = document.getElementById("worldmap");
+  const zoomGroup = document.getElementById("mapZoom");
+  const MIN_SCALE = 1, MAX_SCALE = 6;
+  let scale = 1, panX = 0, panY = 0;
+  let pointers = new Map();
+  let mode = null; // 'pan' | 'pinch'
+  let panStartSvg = null, panStartPan = null;
+  let pinchStartDist = 0, pinchStartScale = 1, pinchAnchor = null;
+  let didDrag = false;
+
+  function apply() {
+    zoomGroup.setAttribute("transform", `translate(${panX},${panY}) scale(${scale})`);
+    svg.classList.toggle("grabbing", mode === "pan");
+  }
+  function clampPan() {
+    const minX = 1000 * (1 - scale), minY = 500 * (1 - scale);
+    panX = Math.min(0, Math.max(minX, panX));
+    panY = Math.min(0, Math.max(minY, panY));
+  }
+  function clientToSvg(clientX, clientY) {
+    const pt = svg.createSVGPoint();
+    pt.x = clientX; pt.y = clientY;
+    return pt.matrixTransform(svg.getScreenCTM().inverse());
+  }
+  function zoomAt(svgPt, newScale) {
+    newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, newScale));
+    const contentX = (svgPt.x - panX) / scale, contentY = (svgPt.y - panY) / scale;
+    scale = newScale;
+    panX = svgPt.x - contentX * scale;
+    panY = svgPt.y - contentY * scale;
+    clampPan();
+    apply();
+  }
+
+  svg.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    const pt = clientToSvg(e.clientX, e.clientY);
+    zoomAt(pt, scale * Math.exp(-e.deltaY * 0.0016));
+  }, { passive: false });
+
+  svg.addEventListener("dblclick", (e) => {
+    const pt = clientToSvg(e.clientX, e.clientY);
+    zoomAt(pt, scale >= MAX_SCALE - 0.01 ? 1 : scale * 2);
+  });
+
+  svg.addEventListener("pointerdown", (e) => {
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    didDrag = false;
+    if (pointers.size === 1) {
+      mode = "pan";
+      panStartSvg = clientToSvg(e.clientX, e.clientY);
+      panStartPan = { x: panX, y: panY };
+    } else if (pointers.size === 2) {
+      const pts = [...pointers.values()].map(p => clientToSvg(p.x, p.y));
+      pinchStartDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y) || 1;
+      pinchStartScale = scale;
+      const midSvg = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
+      pinchAnchor = { x: (midSvg.x - panX) / scale, y: (midSvg.y - panY) / scale };
+      mode = "pinch";
+    }
+  });
+
+  window.addEventListener("pointermove", (e) => {
+    if (!pointers.has(e.pointerId)) return;
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (mode === "pan" && pointers.size === 1) {
+      const cur = clientToSvg(e.clientX, e.clientY);
+      const dx = cur.x - panStartSvg.x, dy = cur.y - panStartSvg.y;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) didDrag = true;
+      panX = panStartPan.x + dx; panY = panStartPan.y + dy;
+      clampPan(); apply();
+    } else if (mode === "pinch" && pointers.size === 2) {
+      didDrag = true;
+      const pts = [...pointers.values()].map(p => clientToSvg(p.x, p.y));
+      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y) || 1;
+      const midSvg = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
+      const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, pinchStartScale * (dist / pinchStartDist)));
+      scale = newScale;
+      panX = midSvg.x - pinchAnchor.x * scale;
+      panY = midSvg.y - pinchAnchor.y * scale;
+      clampPan(); apply();
+    }
+  });
+
+  function endPointer(e) {
+    pointers.delete(e.pointerId);
+    if (pointers.size === 1) {
+      // dropped from pinch to a single finger — resume panning from here
+      const [[id, p]] = pointers;
+      mode = "pan";
+      panStartSvg = clientToSvg(p.x, p.y);
+      panStartPan = { x: panX, y: panY };
+    } else if (pointers.size === 0) {
+      mode = null;
+      svg.classList.remove("grabbing");
+    }
+  }
+  window.addEventListener("pointerup", endPointer);
+  window.addEventListener("pointercancel", endPointer);
+
+  // Suppress the click that would otherwise fire on a pin/card after a drag/pinch.
+  svg.addEventListener("click", (e) => { if (didDrag) { e.stopPropagation(); e.preventDefault(); } }, true);
+
+  document.getElementById("zoomIn").onclick = () => zoomAt({ x: 500, y: 250 }, scale * 1.6);
+  document.getElementById("zoomOut").onclick = () => zoomAt({ x: 500, y: 250 }, scale / 1.6);
+  document.getElementById("zoomReset").onclick = () => { scale = 1; panX = 0; panY = 0; apply(); };
+
+  apply();
+})();
 
 /* ---------- Google Calendar (optional) ---------- */
 // Enable by pasting an OAuth Client ID (Web) below:
