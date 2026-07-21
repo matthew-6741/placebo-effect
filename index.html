@@ -308,16 +308,16 @@
   .map-panel { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 10px; box-shadow: var(--shadow); margin-bottom: 16px; }
   .worldmap { width: 100%; height: auto; display: block; border-radius: 12px;
     background: radial-gradient(700px 360px at 50% 42%, rgba(124,92,255,.10), transparent 70%), var(--bg2); }
-  .mgrid line { stroke: var(--line); stroke-width: 1; opacity: .45; }
-  .mland path { fill: #2a2f55; opacity: .6; stroke: #3c4374; stroke-width: 1; }
-  .farc { fill: none; stroke: url(#arcGrad); stroke-width: 2.5; stroke-dasharray: 6 6; animation: dash 1s linear infinite; }
+  .mapimg { filter: saturate(.85) brightness(.92); opacity: .92; }
+  body.light .mapimg { filter: saturate(.9) brightness(1.03) contrast(1.02); opacity: 1; }
+  .farc { fill: none; stroke: url(#arcGrad); stroke-width: 2.5; stroke-dasharray: 6 6; animation: dash 1s linear infinite; filter: drop-shadow(0 0 2px rgba(0,0,0,.5)); }
   @keyframes dash { to { stroke-dashoffset: -12; } }
-  .origin circle { fill: var(--accent2); }
-  .origin .olabel { fill: var(--muted); font-size: 12px; font-weight: 700; }
-  .destpin .dp { fill: var(--card2); stroke: var(--line); stroke-width: 1.5; transition: .15s; }
-  .destpin:hover .dp { stroke: var(--accent); }
-  .destpin.sel .dp { fill: var(--accent); stroke: #fff; stroke-width: 2; }
-  .destpin .dl { display: none; fill: var(--text); font-weight: 800; paint-order: stroke; stroke: var(--bg2); stroke-width: 3px; }
+  .origin circle { fill: var(--accent2); stroke: #fff; stroke-width: 1.5; filter: drop-shadow(0 1px 3px rgba(0,0,0,.5)); }
+  .origin .olabel { fill: #fff; font-size: 12px; font-weight: 800; paint-order: stroke; stroke: #000; stroke-opacity: .55; stroke-width: 3px; }
+  .destpin .dp { fill: var(--accent); stroke: #fff; stroke-width: 1.5; transition: .15s; filter: drop-shadow(0 1px 3px rgba(0,0,0,.45)); }
+  .destpin:hover .dp { fill: var(--accent2); }
+  .destpin.sel .dp { fill: var(--accent2); stroke: #fff; stroke-width: 2; }
+  .destpin .dl { display: none; fill: #fff; font-weight: 800; paint-order: stroke; stroke: #000; stroke-opacity: .55; stroke-width: 3px; }
   .destpin.sel .dl { display: block; }
   .destpin.sel .dp { r: 12; }
 
@@ -557,25 +557,16 @@
     <div class="section-title">Phantom Travel — book the getaway, skip the airport</div>
 
     <div class="map-panel">
-      <svg viewBox="0 0 1000 460" class="worldmap" id="worldmap" preserveAspectRatio="xMidYMid meet">
+      <svg viewBox="0 0 1000 500" class="worldmap" id="worldmap" preserveAspectRatio="xMidYMid meet">
         <defs>
           <linearGradient id="arcGrad" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0" stop-color="#00d6a4" />
             <stop offset="1" stop-color="#7c5cff" />
           </linearGradient>
         </defs>
-        <g class="mgrid">
-          <line x1="0" y1="153" x2="1000" y2="153" /><line x1="0" y1="306" x2="1000" y2="306" />
-          <line x1="250" y1="0" x2="250" y2="460" /><line x1="500" y1="0" x2="500" y2="460" /><line x1="750" y1="0" x2="750" y2="460" />
-        </g>
-        <g class="mland">
-          <path d="M120,95 Q160,70 230,80 Q300,90 305,130 Q300,160 255,165 Q260,205 235,235 Q205,225 195,180 Q150,165 140,130 Q120,115 120,95 Z" />
-          <path d="M325,255 Q370,250 388,290 Q392,330 365,375 Q345,420 332,375 Q320,320 318,285 Q318,262 325,255 Z" />
-          <path d="M482,108 Q520,98 552,112 Q560,140 530,160 Q500,162 485,140 Q478,122 482,108 Z" />
-          <path d="M508,182 Q570,172 612,200 Q620,250 585,315 Q558,360 540,310 Q518,255 505,210 Q502,190 508,182 Z" />
-          <path d="M560,100 Q700,80 850,110 Q905,125 885,165 Q840,190 790,178 Q740,200 690,188 Q640,205 600,180 Q565,155 558,125 Q556,108 560,100 Z" />
-          <path d="M838,308 Q895,300 938,322 Q948,352 905,378 Q855,372 840,345 Q832,322 838,308 Z" />
-        </g>
+        <!-- Real world map (equirectangular, public domain via Wikimedia Commons) -->
+        <image class="mapimg" href="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/World_location_map_%28equirectangular_180%29.svg/1920px-World_location_map_%28equirectangular_180%29.svg.png"
+               x="0" y="0" width="1000" height="500" preserveAspectRatio="none" />
         <g id="arcLayer" style="opacity:0">
           <path id="flightArc" class="farc" d="" />
           <text id="plane" class="plane" font-size="22">✈️
@@ -584,7 +575,7 @@
             </animateMotion>
           </text>
         </g>
-        <g class="origin" transform="translate(250,180)">
+        <g class="origin" transform="translate(294,137)">
           <circle class="opulse" r="4"><animate attributeName="r" values="4;18" dur="1.7s" repeatCount="indefinite" /><animate attributeName="opacity" values=".55;0" dur="1.7s" repeatCount="indefinite" /></circle>
           <circle r="4.5" />
           <text y="-12" class="olabel" text-anchor="middle">Your couch</text>
@@ -955,7 +946,10 @@ function cuisinesInRegion(regionName) {
     (pri.includes(a.name) ? pri.indexOf(a.name) : 1e9) - (pri.includes(b.name) ? pri.indexOf(b.name) : 1e9));
 }
 
-const CITY_KW = { "Tokyo": "tokyo", "Paris": "paris", "Bali": "bali", "New York": "newyork", "Reykjavík": "iceland", "Rio": "rio", "Sydney": "sydney", "Cairo": "pyramids" };
+const CITY_KW = {
+  "Tokyo": "tokyo", "Paris": "paris", "Bali": "bali", "New York": "newyork", "Reykjavík": "iceland",
+  "Rio": "rio", "Sydney": "sydney", "Cairo": "pyramids", "Quito": "quitoecuador", "Galápagos": "galapagosislands",
+};
 function hashStr(s) { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; }
 // Hand-verified photo per dish — every image is the finished plated food, no people.
 // Sources: TheMealDB + Wikimedia Commons (anonymous hotlinks, no tracking).
@@ -1530,60 +1524,65 @@ setInterval(() => {
 }, 5000);
 
 /* ---------- travel / maps ---------- */
-const ORIGIN = { x: 250, y: 180 };
-// Top 50 destinations. x/y ≈ map coords from lat/lon (x=(lon+180)/360*1000, y=280−2.37·lat).
+const ORIGIN = { x: 294, y: 137 }; // "Your couch" — placed at real NYC coordinates
+// Top destinations, placed by real coordinates on the equirectangular map:
+// x = (lon+180)/360·1000, y = (90−lat)/180·500 (computed below).
 const DEST = [
-  { city: "Tokyo",        code: "TYO", emoji: "🗼", x: 880, y: 195, price: 842,  hrs: "13h 25m" },
-  { city: "Paris",        code: "PAR", emoji: "🥐", x: 545, y: 150, price: 610,  hrs: "7h 40m" },
-  { city: "Bali",         code: "DPS", emoji: "🏝️", x: 835, y: 300, price: 930,  hrs: "19h 10m" },
-  { city: "New York",     code: "JFK", emoji: "🗽", x: 300, y: 178, price: 215,  hrs: "5h 30m" },
-  { city: "Reykjavík",    code: "KEF", emoji: "❄️", x: 505, y: 118, price: 430,  hrs: "6h 05m" },
-  { city: "Rio",          code: "GIG", emoji: "🎭", x: 370, y: 330, price: 720,  hrs: "10h 50m" },
-  { city: "Sydney",       code: "SYD", emoji: "🦘", x: 910, y: 360, price: 1180, hrs: "21h 30m" },
-  { city: "Cairo",        code: "CAI", emoji: "🐫", x: 585, y: 215, price: 680,  hrs: "11h 15m" },
-  { city: "London",       code: "LHR", emoji: "💂", x: 500, y: 158, price: 520,  hrs: "7h 00m" },
-  { city: "Rome",         code: "FCO", emoji: "🏛️", x: 535, y: 181, price: 640,  hrs: "8h 30m" },
-  { city: "Barcelona",    code: "BCN", emoji: "⚽", x: 506, y: 182, price: 580,  hrs: "7h 50m" },
-  { city: "Lisbon",       code: "LIS", emoji: "🚋", x: 475, y: 188, price: 560,  hrs: "7h 00m" },
-  { city: "Amsterdam",    code: "AMS", emoji: "🌷", x: 514, y: 156, price: 540,  hrs: "7h 20m" },
-  { city: "Berlin",       code: "BER", emoji: "🐻", x: 537, y: 156, price: 600,  hrs: "8h 00m" },
-  { city: "Vienna",       code: "VIE", emoji: "🎻", x: 546, y: 166, price: 630,  hrs: "8h 40m" },
-  { city: "Athens",       code: "ATH", emoji: "🏺", x: 566, y: 190, price: 680,  hrs: "9h 40m" },
-  { city: "Santorini",    code: "JTR", emoji: "🌅", x: 571, y: 194, price: 720,  hrs: "10h 20m" },
-  { city: "Istanbul",     code: "IST", emoji: "🕌", x: 581, y: 183, price: 700,  hrs: "9h 50m" },
-  { city: "Dubai",        code: "DXB", emoji: "🏙️", x: 654, y: 220, price: 890,  hrs: "12h 10m" },
-  { city: "Marrakech",    code: "RAK", emoji: "🏜️", x: 478, y: 205, price: 610,  hrs: "7h 30m" },
-  { city: "Cape Town",    code: "CPT", emoji: "🐧", x: 551, y: 360, price: 1050, hrs: "15h 00m" },
-  { city: "Nairobi",      code: "NBO", emoji: "🦁", x: 602, y: 283, price: 960,  hrs: "14h 20m" },
-  { city: "Bangkok",      code: "BKK", emoji: "🛺", x: 779, y: 247, price: 850,  hrs: "17h 00m" },
-  { city: "Phuket",       code: "HKT", emoji: "🛶", x: 773, y: 261, price: 920,  hrs: "18h 30m" },
-  { city: "Singapore",    code: "SIN", emoji: "🌇", x: 789, y: 277, price: 880,  hrs: "18h 00m" },
-  { city: "Hong Kong",    code: "HKG", emoji: "🥟", x: 817, y: 227, price: 860,  hrs: "15h 50m" },
-  { city: "Seoul",        code: "ICN", emoji: "🎤", x: 853, y: 191, price: 830,  hrs: "14h 30m" },
-  { city: "Kyoto",        code: "KIX", emoji: "⛩️", x: 877, y: 197, price: 870,  hrs: "14h 00m" },
-  { city: "Shanghai",     code: "PVG", emoji: "🏮", x: 838, y: 206, price: 820,  hrs: "14h 50m" },
-  { city: "Beijing",      code: "PEK", emoji: "🐉", x: 823, y: 185, price: 810,  hrs: "13h 30m" },
-  { city: "Mumbai",       code: "BOM", emoji: "🎬", x: 702, y: 235, price: 780,  hrs: "15h 00m" },
-  { city: "Delhi",        code: "DEL", emoji: "🐘", x: 714, y: 212, price: 760,  hrs: "14h 00m" },
-  { city: "Maldives",     code: "MLE", emoji: "🐠", x: 704, y: 270, price: 1150, hrs: "18h 40m" },
-  { city: "Kathmandu",    code: "KTM", emoji: "🏔️", x: 737, y: 214, price: 900,  hrs: "16h 00m" },
-  { city: "Auckland",     code: "AKL", emoji: "🐑", x: 980, y: 367, price: 1250, hrs: "21h 00m" },
-  { city: "Queenstown",   code: "ZQN", emoji: "🎿", x: 969, y: 387, price: 1350, hrs: "23h 00m" },
-  { city: "Fiji",         code: "NAN", emoji: "🌺", x: 985, y: 322, price: 1200, hrs: "20h 30m" },
-  { city: "Honolulu",     code: "HNL", emoji: "🏄", x: 61,  y: 230, price: 620,  hrs: "10h 30m" },
-  { city: "Los Angeles",  code: "LAX", emoji: "🌴", x: 172, y: 199, price: 320,  hrs: "6h 10m" },
-  { city: "San Francisco",code: "SFO", emoji: "🌉", x: 160, y: 190, price: 340,  hrs: "6h 30m" },
-  { city: "Vancouver",    code: "YVR", emoji: "🍁", x: 158, y: 163, price: 380,  hrs: "6h 50m" },
-  { city: "Toronto",      code: "YYZ", emoji: "🏒", x: 279, y: 176, price: 240,  hrs: "1h 40m" },
-  { city: "Mexico City",  code: "MEX", emoji: "🌮", x: 225, y: 234, price: 380,  hrs: "5h 30m" },
-  { city: "Cancún",       code: "CUN", emoji: "🏖️", x: 259, y: 230, price: 350,  hrs: "4h 30m" },
-  { city: "Havana",       code: "HAV", emoji: "🚗", x: 271, y: 225, price: 310,  hrs: "3h 50m" },
-  { city: "Bogotá",       code: "BOG", emoji: "☕", x: 294, y: 269, price: 420,  hrs: "5h 50m" },
-  { city: "Lima",         code: "LIM", emoji: "🦙", x: 286, y: 308, price: 560,  hrs: "8h 00m" },
-  { city: "Cusco",        code: "CUZ", emoji: "⛰️", x: 300, y: 312, price: 640,  hrs: "9h 30m" },
-  { city: "Buenos Aires", code: "EZE", emoji: "💃", x: 338, y: 362, price: 780,  hrs: "11h 00m" },
-  { city: "Cartagena",    code: "CTG", emoji: "🌊", x: 290, y: 255, price: 390,  hrs: "5h 20m" },
+  { city: "Tokyo",        code: "TYO", emoji: "🗼", lat: 35.7,  lon: 139.7,  price: 842,  hrs: "13h 25m" },
+  { city: "Paris",        code: "PAR", emoji: "🥐", lat: 48.9,  lon: 2.35,   price: 610,  hrs: "7h 40m" },
+  { city: "Bali",         code: "DPS", emoji: "🏝️", lat: -8.4,  lon: 115.2,  price: 930,  hrs: "19h 10m" },
+  { city: "New York",     code: "JFK", emoji: "🗽", lat: 40.7,  lon: -74.0,  price: 215,  hrs: "5h 30m" },
+  { city: "Reykjavík",    code: "KEF", emoji: "❄️", lat: 64.1,  lon: -21.9,  price: 430,  hrs: "6h 05m" },
+  { city: "Rio",          code: "GIG", emoji: "🎭", lat: -22.9, lon: -43.2,  price: 720,  hrs: "10h 50m" },
+  { city: "Sydney",       code: "SYD", emoji: "🦘", lat: -33.9, lon: 151.2,  price: 1180, hrs: "21h 30m" },
+  { city: "Cairo",        code: "CAI", emoji: "🐫", lat: 30.0,  lon: 31.2,   price: 680,  hrs: "11h 15m" },
+  { city: "Quito",        code: "UIO", emoji: "🌋", lat: -0.2,  lon: -78.5,  price: 460,  hrs: "6h 10m" },
+  { city: "Galápagos",    code: "GPS", emoji: "🐢", lat: -0.7,  lon: -90.3,  price: 780,  hrs: "9h 40m" },
+  { city: "London",       code: "LHR", emoji: "💂", lat: 51.5,  lon: -0.1,   price: 520,  hrs: "7h 00m" },
+  { city: "Rome",         code: "FCO", emoji: "🏛️", lat: 41.9,  lon: 12.5,   price: 640,  hrs: "8h 30m" },
+  { city: "Barcelona",    code: "BCN", emoji: "⚽", lat: 41.4,  lon: 2.2,    price: 580,  hrs: "7h 50m" },
+  { city: "Lisbon",       code: "LIS", emoji: "🚋", lat: 38.7,  lon: -9.1,   price: 560,  hrs: "7h 00m" },
+  { city: "Amsterdam",    code: "AMS", emoji: "🌷", lat: 52.4,  lon: 4.9,    price: 540,  hrs: "7h 20m" },
+  { city: "Berlin",       code: "BER", emoji: "🐻", lat: 52.5,  lon: 13.4,   price: 600,  hrs: "8h 00m" },
+  { city: "Vienna",       code: "VIE", emoji: "🎻", lat: 48.2,  lon: 16.4,   price: 630,  hrs: "8h 40m" },
+  { city: "Athens",       code: "ATH", emoji: "🏺", lat: 38.0,  lon: 23.7,   price: 680,  hrs: "9h 40m" },
+  { city: "Santorini",    code: "JTR", emoji: "🌅", lat: 36.4,  lon: 25.4,   price: 720,  hrs: "10h 20m" },
+  { city: "Istanbul",     code: "IST", emoji: "🕌", lat: 41.0,  lon: 29.0,   price: 700,  hrs: "9h 50m" },
+  { city: "Dubai",        code: "DXB", emoji: "🏙️", lat: 25.2,  lon: 55.3,   price: 890,  hrs: "12h 10m" },
+  { city: "Marrakech",    code: "RAK", emoji: "🏜️", lat: 31.6,  lon: -8.0,   price: 610,  hrs: "7h 30m" },
+  { city: "Cape Town",    code: "CPT", emoji: "🐧", lat: -33.9, lon: 18.4,   price: 1050, hrs: "15h 00m" },
+  { city: "Nairobi",      code: "NBO", emoji: "🦁", lat: -1.3,  lon: 36.8,   price: 960,  hrs: "14h 20m" },
+  { city: "Bangkok",      code: "BKK", emoji: "🛺", lat: 13.8,  lon: 100.5,  price: 850,  hrs: "17h 00m" },
+  { city: "Phuket",       code: "HKT", emoji: "🛶", lat: 7.9,   lon: 98.4,   price: 920,  hrs: "18h 30m" },
+  { city: "Singapore",    code: "SIN", emoji: "🌇", lat: 1.35,  lon: 103.8,  price: 880,  hrs: "18h 00m" },
+  { city: "Hong Kong",    code: "HKG", emoji: "🥟", lat: 22.3,  lon: 114.2,  price: 860,  hrs: "15h 50m" },
+  { city: "Seoul",        code: "ICN", emoji: "🎤", lat: 37.5,  lon: 127.0,  price: 830,  hrs: "14h 30m" },
+  { city: "Kyoto",        code: "KIX", emoji: "⛩️", lat: 35.0,  lon: 135.8,  price: 870,  hrs: "14h 00m" },
+  { city: "Shanghai",     code: "PVG", emoji: "🏮", lat: 31.2,  lon: 121.5,  price: 820,  hrs: "14h 50m" },
+  { city: "Beijing",      code: "PEK", emoji: "🐉", lat: 39.9,  lon: 116.4,  price: 810,  hrs: "13h 30m" },
+  { city: "Mumbai",       code: "BOM", emoji: "🎬", lat: 19.1,  lon: 72.9,   price: 780,  hrs: "15h 00m" },
+  { city: "Delhi",        code: "DEL", emoji: "🐘", lat: 28.6,  lon: 77.2,   price: 760,  hrs: "14h 00m" },
+  { city: "Maldives",     code: "MLE", emoji: "🐠", lat: 4.2,   lon: 73.5,   price: 1150, hrs: "18h 40m" },
+  { city: "Kathmandu",    code: "KTM", emoji: "🏔️", lat: 27.7,  lon: 85.3,   price: 900,  hrs: "16h 00m" },
+  { city: "Auckland",     code: "AKL", emoji: "🐑", lat: -36.8, lon: 174.8,  price: 1250, hrs: "21h 00m" },
+  { city: "Queenstown",   code: "ZQN", emoji: "🎿", lat: -45.0, lon: 168.7,  price: 1350, hrs: "23h 00m" },
+  { city: "Fiji",         code: "NAN", emoji: "🌺", lat: -17.8, lon: 177.4,  price: 1200, hrs: "20h 30m" },
+  { city: "Honolulu",     code: "HNL", emoji: "🏄", lat: 21.3,  lon: -157.9, price: 620,  hrs: "10h 30m" },
+  { city: "Los Angeles",  code: "LAX", emoji: "🌴", lat: 34.0,  lon: -118.2, price: 320,  hrs: "6h 10m" },
+  { city: "San Francisco",code: "SFO", emoji: "🌉", lat: 37.8,  lon: -122.4, price: 340,  hrs: "6h 30m" },
+  { city: "Vancouver",    code: "YVR", emoji: "🍁", lat: 49.3,  lon: -123.1, price: 380,  hrs: "6h 50m" },
+  { city: "Toronto",      code: "YYZ", emoji: "🏒", lat: 43.7,  lon: -79.4,  price: 240,  hrs: "1h 40m" },
+  { city: "Mexico City",  code: "MEX", emoji: "🌮", lat: 19.4,  lon: -99.1,  price: 380,  hrs: "5h 30m" },
+  { city: "Cancún",       code: "CUN", emoji: "🏖️", lat: 21.2,  lon: -86.9,  price: 350,  hrs: "4h 30m" },
+  { city: "Havana",       code: "HAV", emoji: "🚗", lat: 23.1,  lon: -82.4,  price: 310,  hrs: "3h 50m" },
+  { city: "Bogotá",       code: "BOG", emoji: "☕", lat: 4.7,   lon: -74.1,  price: 420,  hrs: "5h 50m" },
+  { city: "Lima",         code: "LIM", emoji: "🦙", lat: -12.0, lon: -77.0,  price: 560,  hrs: "8h 00m" },
+  { city: "Cusco",        code: "CUZ", emoji: "⛰️", lat: -13.5, lon: -72.0,  price: 640,  hrs: "9h 30m" },
+  { city: "Buenos Aires", code: "EZE", emoji: "💃", lat: -34.6, lon: -58.4,  price: 780,  hrs: "11h 00m" },
+  { city: "Cartagena",    code: "CTG", emoji: "🌊", lat: 10.4,  lon: -75.5,  price: 390,  hrs: "5h 20m" },
 ];
+// Project lat/lon onto the 1000×500 equirectangular map.
+DEST.forEach(d => { d.x = Math.round((d.lon + 180) / 360 * 1000); d.y = Math.round((90 - d.lat) / 180 * 500); });
 
 // Cabin classes — pick your imaginary legroom.
 const CLASSES = [
