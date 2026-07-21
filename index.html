@@ -317,8 +317,9 @@
   .destpin .dp { fill: var(--card2); stroke: var(--line); stroke-width: 1.5; transition: .15s; }
   .destpin:hover .dp { stroke: var(--accent); }
   .destpin.sel .dp { fill: var(--accent); stroke: #fff; stroke-width: 2; }
-  .destpin .dl { fill: var(--muted); font-weight: 700; }
-  .destpin.sel .dl { fill: var(--text); }
+  .destpin .dl { display: none; fill: var(--text); font-weight: 800; paint-order: stroke; stroke: var(--bg2); stroke-width: 3px; }
+  .destpin.sel .dl { display: block; }
+  .destpin.sel .dp { r: 12; }
 
   .dest-row { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 16px; }
   .destcard { flex: none; width: 156px; background: var(--card); border: 1.5px solid var(--line); border-radius: 14px; padding: 0; overflow: hidden; cursor: pointer; transition: .15s; }
@@ -593,6 +594,11 @@
     </div>
 
     <div class="dest-row" id="destRow"></div>
+    <div class="seg" id="classSeg" style="margin:0 0 14px">
+      <button class="sel" data-cls="0">💺 Economy</button>
+      <button data-cls="1">🥂 Business</button>
+      <button data-cls="2">👑 First</button>
+    </div>
     <div id="tripCard"></div>
   </section>
 
@@ -1525,16 +1531,67 @@ setInterval(() => {
 
 /* ---------- travel / maps ---------- */
 const ORIGIN = { x: 250, y: 180 };
+// Top 50 destinations. x/y ≈ map coords from lat/lon (x=(lon+180)/360*1000, y=280−2.37·lat).
 const DEST = [
-  { city: "Tokyo",     code: "TYO", emoji: "🗼", x: 880, y: 195, price: 842,  hrs: "13h 25m" },
-  { city: "Paris",     code: "PAR", emoji: "🥐", x: 545, y: 150, price: 610,  hrs: "7h 40m" },
-  { city: "Bali",      code: "DPS", emoji: "🏝️", x: 835, y: 300, price: 930,  hrs: "19h 10m" },
-  { city: "New York",  code: "JFK", emoji: "🗽", x: 300, y: 178, price: 215,  hrs: "5h 30m" },
-  { city: "Reykjavík", code: "KEF", emoji: "❄️", x: 505, y: 118, price: 430,  hrs: "6h 05m" },
-  { city: "Rio",       code: "GIG", emoji: "🎭", x: 370, y: 330, price: 720,  hrs: "10h 50m" },
-  { city: "Sydney",    code: "SYD", emoji: "🦘", x: 910, y: 360, price: 1180, hrs: "21h 30m" },
-  { city: "Cairo",     code: "CAI", emoji: "🐫", x: 585, y: 215, price: 680,  hrs: "11h 15m" },
+  { city: "Tokyo",        code: "TYO", emoji: "🗼", x: 880, y: 195, price: 842,  hrs: "13h 25m" },
+  { city: "Paris",        code: "PAR", emoji: "🥐", x: 545, y: 150, price: 610,  hrs: "7h 40m" },
+  { city: "Bali",         code: "DPS", emoji: "🏝️", x: 835, y: 300, price: 930,  hrs: "19h 10m" },
+  { city: "New York",     code: "JFK", emoji: "🗽", x: 300, y: 178, price: 215,  hrs: "5h 30m" },
+  { city: "Reykjavík",    code: "KEF", emoji: "❄️", x: 505, y: 118, price: 430,  hrs: "6h 05m" },
+  { city: "Rio",          code: "GIG", emoji: "🎭", x: 370, y: 330, price: 720,  hrs: "10h 50m" },
+  { city: "Sydney",       code: "SYD", emoji: "🦘", x: 910, y: 360, price: 1180, hrs: "21h 30m" },
+  { city: "Cairo",        code: "CAI", emoji: "🐫", x: 585, y: 215, price: 680,  hrs: "11h 15m" },
+  { city: "London",       code: "LHR", emoji: "💂", x: 500, y: 158, price: 520,  hrs: "7h 00m" },
+  { city: "Rome",         code: "FCO", emoji: "🏛️", x: 535, y: 181, price: 640,  hrs: "8h 30m" },
+  { city: "Barcelona",    code: "BCN", emoji: "⚽", x: 506, y: 182, price: 580,  hrs: "7h 50m" },
+  { city: "Lisbon",       code: "LIS", emoji: "🚋", x: 475, y: 188, price: 560,  hrs: "7h 00m" },
+  { city: "Amsterdam",    code: "AMS", emoji: "🌷", x: 514, y: 156, price: 540,  hrs: "7h 20m" },
+  { city: "Berlin",       code: "BER", emoji: "🐻", x: 537, y: 156, price: 600,  hrs: "8h 00m" },
+  { city: "Vienna",       code: "VIE", emoji: "🎻", x: 546, y: 166, price: 630,  hrs: "8h 40m" },
+  { city: "Athens",       code: "ATH", emoji: "🏺", x: 566, y: 190, price: 680,  hrs: "9h 40m" },
+  { city: "Santorini",    code: "JTR", emoji: "🌅", x: 571, y: 194, price: 720,  hrs: "10h 20m" },
+  { city: "Istanbul",     code: "IST", emoji: "🕌", x: 581, y: 183, price: 700,  hrs: "9h 50m" },
+  { city: "Dubai",        code: "DXB", emoji: "🏙️", x: 654, y: 220, price: 890,  hrs: "12h 10m" },
+  { city: "Marrakech",    code: "RAK", emoji: "🏜️", x: 478, y: 205, price: 610,  hrs: "7h 30m" },
+  { city: "Cape Town",    code: "CPT", emoji: "🐧", x: 551, y: 360, price: 1050, hrs: "15h 00m" },
+  { city: "Nairobi",      code: "NBO", emoji: "🦁", x: 602, y: 283, price: 960,  hrs: "14h 20m" },
+  { city: "Bangkok",      code: "BKK", emoji: "🛺", x: 779, y: 247, price: 850,  hrs: "17h 00m" },
+  { city: "Phuket",       code: "HKT", emoji: "🛶", x: 773, y: 261, price: 920,  hrs: "18h 30m" },
+  { city: "Singapore",    code: "SIN", emoji: "🌇", x: 789, y: 277, price: 880,  hrs: "18h 00m" },
+  { city: "Hong Kong",    code: "HKG", emoji: "🥟", x: 817, y: 227, price: 860,  hrs: "15h 50m" },
+  { city: "Seoul",        code: "ICN", emoji: "🎤", x: 853, y: 191, price: 830,  hrs: "14h 30m" },
+  { city: "Kyoto",        code: "KIX", emoji: "⛩️", x: 877, y: 197, price: 870,  hrs: "14h 00m" },
+  { city: "Shanghai",     code: "PVG", emoji: "🏮", x: 838, y: 206, price: 820,  hrs: "14h 50m" },
+  { city: "Beijing",      code: "PEK", emoji: "🐉", x: 823, y: 185, price: 810,  hrs: "13h 30m" },
+  { city: "Mumbai",       code: "BOM", emoji: "🎬", x: 702, y: 235, price: 780,  hrs: "15h 00m" },
+  { city: "Delhi",        code: "DEL", emoji: "🐘", x: 714, y: 212, price: 760,  hrs: "14h 00m" },
+  { city: "Maldives",     code: "MLE", emoji: "🐠", x: 704, y: 270, price: 1150, hrs: "18h 40m" },
+  { city: "Kathmandu",    code: "KTM", emoji: "🏔️", x: 737, y: 214, price: 900,  hrs: "16h 00m" },
+  { city: "Auckland",     code: "AKL", emoji: "🐑", x: 980, y: 367, price: 1250, hrs: "21h 00m" },
+  { city: "Queenstown",   code: "ZQN", emoji: "🎿", x: 969, y: 387, price: 1350, hrs: "23h 00m" },
+  { city: "Fiji",         code: "NAN", emoji: "🌺", x: 985, y: 322, price: 1200, hrs: "20h 30m" },
+  { city: "Honolulu",     code: "HNL", emoji: "🏄", x: 61,  y: 230, price: 620,  hrs: "10h 30m" },
+  { city: "Los Angeles",  code: "LAX", emoji: "🌴", x: 172, y: 199, price: 320,  hrs: "6h 10m" },
+  { city: "San Francisco",code: "SFO", emoji: "🌉", x: 160, y: 190, price: 340,  hrs: "6h 30m" },
+  { city: "Vancouver",    code: "YVR", emoji: "🍁", x: 158, y: 163, price: 380,  hrs: "6h 50m" },
+  { city: "Toronto",      code: "YYZ", emoji: "🏒", x: 279, y: 176, price: 240,  hrs: "1h 40m" },
+  { city: "Mexico City",  code: "MEX", emoji: "🌮", x: 225, y: 234, price: 380,  hrs: "5h 30m" },
+  { city: "Cancún",       code: "CUN", emoji: "🏖️", x: 259, y: 230, price: 350,  hrs: "4h 30m" },
+  { city: "Havana",       code: "HAV", emoji: "🚗", x: 271, y: 225, price: 310,  hrs: "3h 50m" },
+  { city: "Bogotá",       code: "BOG", emoji: "☕", x: 294, y: 269, price: 420,  hrs: "5h 50m" },
+  { city: "Lima",         code: "LIM", emoji: "🦙", x: 286, y: 308, price: 560,  hrs: "8h 00m" },
+  { city: "Cusco",        code: "CUZ", emoji: "⛰️", x: 300, y: 312, price: 640,  hrs: "9h 30m" },
+  { city: "Buenos Aires", code: "EZE", emoji: "💃", x: 338, y: 362, price: 780,  hrs: "11h 00m" },
+  { city: "Cartagena",    code: "CTG", emoji: "🌊", x: 290, y: 255, price: 390,  hrs: "5h 20m" },
 ];
+
+// Cabin classes — pick your imaginary legroom.
+const CLASSES = [
+  { name: "Economy",  emoji: "💺", mult: 1,   seat: "Seat 34E" },
+  { name: "Business", emoji: "🥂", mult: 2.8, seat: "Seat 4A" },
+  { name: "First",    emoji: "👑", mult: 5,   seat: "Suite 1A" },
+];
+let selClass = 0;
 let selTravel = 0;
 
 const destPinsG = document.getElementById("destPins");
@@ -1544,7 +1601,7 @@ DEST.forEach((d, i) => {
   g.setAttribute("class", "destpin");
   g.setAttribute("transform", `translate(${d.x},${d.y})`);
   g.style.cursor = "pointer";
-  g.innerHTML = `<circle class="dp" r="14"></circle><text class="de" y="6" text-anchor="middle" font-size="18">${d.emoji}</text><text class="dl" y="33" text-anchor="middle" font-size="12">${d.city}</text>`;
+  g.innerHTML = `<circle class="dp" r="9"></circle><text class="de" y="4" text-anchor="middle" font-size="11">${d.emoji}</text><text class="dl" y="26" text-anchor="middle" font-size="12">${d.city}</text>`;
   g.addEventListener("click", () => selectDest(i));
   destPinsG.appendChild(g);
 
@@ -1572,6 +1629,8 @@ function selectDest(i) {
 
 function renderTripCard(d) {
   const num = 100 + Math.floor(Math.random() * 800);
+  const cls = CLASSES[selClass];
+  const fare = Math.round(d.price * cls.mult);
   document.getElementById("tripCard").innerHTML = `
     <div class="bpass">
       <div class="bp-main">
@@ -1580,15 +1639,22 @@ function renderTripCard(d) {
           <div class="bp-mid">✈️<div class="bp-dur">${d.hrs}</div></div>
           <div class="bp-end"><div class="bp-code">${d.code}</div><div class="bp-city">${d.city}</div></div>
         </div>
-        <div class="bp-meta"><span>Flight PH-${num}</span><span>Seat 14C</span><span>Gate —</span><span>Boarding —:—</span></div>
+        <div class="bp-meta"><span>Flight PH-${num}</span><span>${cls.emoji} ${cls.name}</span><span>${cls.seat}</span><span>Gate —</span><span>Boarding —:—</span></div>
       </div>
       <div class="bp-stub">
-        <div class="bp-price">$${d.price}</div>
+        <div class="bp-price">$${fare.toLocaleString()}</div>
         <button class="btn" id="bookTrip">Book phantom trip</button>
       </div>
     </div>`;
-  document.getElementById("bookTrip").onclick = () => startTracking("travel", { total: d.price, cal: 0, label: `YOU → ${d.code}` });
+  document.getElementById("bookTrip").onclick = () => startTracking("travel", { total: fare, cal: 0, label: `YOU → ${d.code} · ${cls.name}` });
 }
+
+document.querySelectorAll("#classSeg button").forEach(b => b.onclick = () => {
+  selClass = +b.dataset.cls;
+  document.querySelectorAll("#classSeg button").forEach(x => x.classList.remove("sel"));
+  b.classList.add("sel");
+  renderTripCard(DEST[selTravel]); // re-price the boarding pass
+});
 selectDest(0);
 
 /* ---------- Google Calendar (optional) ---------- */
