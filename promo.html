@@ -201,12 +201,20 @@ function runEta() {
   seq.forEach(([txt, col, at]) => timers.push(setTimeout(() => { el.textContent = txt; el.style.color = col; }, at)));
 }
 
+// Cuts: ?cut=food | travel | all30 (default: full). Scene indices into the scenes list.
+const CUTS = {
+  full:   { scenes: [0, 1, 2, 3, 4, 5, 6, 7] },
+  food:   { scenes: [0, 1, 2, 3, 4, 7] },
+  travel: { scenes: [1, 5, 6, 7] },
+  all30:  { scenes: [0, 1, 2, 3, 5, 6, 7], durs: { 0: 3400, 1: 3400, 2: 4000, 3: 4800, 5: 4400, 6: 4000 } },
+};
 function play() {
+  const cut = CUTS[new URLSearchParams(location.search).get("cut")] || CUTS.full;
   timers.forEach(clearTimeout); timers = [];
   let t = 300;
-  scenes.forEach((s, i) => {
-    timers.push(setTimeout(() => showScene(i), t));
-    t += +(s.dataset.dur || 0);
+  cut.scenes.forEach(idx => {
+    timers.push(setTimeout(() => showScene(idx), t));
+    t += (cut.durs?.[idx]) ?? +(scenes[idx].dataset.dur || 0);
   });
 }
 window.jumpTo = (i) => { timers.forEach(clearTimeout); timers = []; showScene(i); }; // for testing
