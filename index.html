@@ -1300,6 +1300,12 @@ function startTracking(kind, info) {
       statusEl.innerHTML = `<span class="pulse" style="background:var(--warn)"></span>${excuse}`;
       if (kind === "ride") { carPos = 12; car.style.left = carPos + "%"; }
       saveStats();
+      if (ghosts === 1) {
+        desktopNotify(
+          isTravel ? "✈️ Your flight is 'delayed'" : isFood ? "👻 Your order got ghosted" : "🚗 Your ride vanished",
+          excuse
+        );
+      }
       if (ghosts >= 2) {
         document.getElementById("waitnote").textContent =
           `You've been ghosted ${ghosts}× this trip. The dopamine is free. The ${isTravel ? "plane" : isFood ? "food" : "driver"} is not coming.`;
@@ -1432,6 +1438,25 @@ function toast(msg) {
   document.body.appendChild(t);
   requestAnimationFrame(() => t.classList.add("show"));
   setTimeout(() => { t.classList.remove("show"); setTimeout(() => t.remove(), 320); }, 2600);
+}
+
+/* ---------- desktop / OS notifications ----------
+   window.electronAPI exists only inside the Electron desktop wrapper (see desktop/preload.js) —
+   there we get real native macOS Notification Center banners. In a plain browser tab we fall back
+   to the standard Notification API so installed-PWA users still get them. Either way this is a
+   pure enhancement: nothing here is required for the web app to work. */
+let notifyPermissionAsked = false;
+function desktopNotify(title, body) {
+  if (window.electronAPI) { window.electronAPI.notify(title, body); return; }
+  if (!("Notification" in window)) return;
+  if (Notification.permission === "granted") {
+    new Notification(title, { body, icon: "icons/icon-192.png" });
+  } else if (Notification.permission === "default" && !notifyPermissionAsked) {
+    notifyPermissionAsked = true;
+    Notification.requestPermission().then((perm) => {
+      if (perm === "granted") new Notification(title, { body, icon: "icons/icon-192.png" });
+    });
+  }
 }
 
 /* ---------- squad / tier list ---------- */

@@ -1,0 +1,14 @@
+{
+  "name": "the-placebo-effect-desktop",
+  "version": "1.0.0",
+  "description": "The Placebo Effect — desktop wrapper (Electron)",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-packager . \"The Placebo Effect\" --platform=darwin --arch=arm64 --icon=icon.icns --overwrite --out=dist"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-packager": "^17.1.2"
+  }
+}
