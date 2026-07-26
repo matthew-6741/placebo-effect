@@ -94,9 +94,12 @@
   .tabs {
     display: flex; gap: 6px; background: var(--bg2);
     border: 1px solid var(--line); border-radius: 999px; padding: 5px;
-    width: fit-content; margin: 0 auto 22px;
+    width: fit-content; max-width: 100%; margin: 0 auto 22px;
+    overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;
   }
+  .tabs::-webkit-scrollbar { display: none; }
   .tabs button {
+    flex: none; white-space: nowrap;
     border: 0; background: transparent; color: var(--muted);
     padding: 10px 22px; border-radius: 999px; font-size: 14px; font-weight: 600;
     cursor: pointer; transition: .2s; font-family: inherit;
@@ -625,7 +628,6 @@
 <!-- Login (on-device only — no servers, nothing is sent anywhere) -->
 <div class="overlay" id="loginOverlay">
   <div class="track" style="text-align:center">
-    <div style="font-size:42px">👻</div>
     <h2>Sign in to The Placebo Effect</h2>
     <div class="sub">One email. No password. Nothing real.</div>
     <div id="loginStep1" style="text-align:left">
@@ -647,8 +649,8 @@
 <!-- First-run novelty disclaimer -->
 <div class="overlay" id="introOverlay">
   <div class="track" style="text-align:center">
-    <div style="font-size:42px">👻</div>
-    <h2>The Placebo Effect is just for fun</h2>
+    <img src="icons/icon-192.png" alt="" style="width:64px; height:64px; border-radius:15px; box-shadow:0 8px 22px rgba(160,40,20,.35);" />
+    <h2 style="margin-top:16px">The Placebo Effect is just for fun</h2>
     <div class="sub" style="margin-bottom:18px">This is a <b>novelty entertainment app</b> — a placebo. Nothing here is real: no food, rides, or trips are ever ordered, no driver is sent, and <b>no payment is ever taken</b> (the wallet is fake and never asks for a real card). It exists purely for the dopamine of tapping "order." 🍔🚗✈️</div>
     <button class="btn" id="introOk">Got it — it's all pretend</button>
   </div>
