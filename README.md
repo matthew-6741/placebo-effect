@@ -2,10 +2,18 @@
 
 **Order the dopamine — skip the delivery.**
 
-The Placebo Effect (formerly "Phantom") is a novelty entertainment web app: a fake food-delivery / ride / travel
-app where you get the full satisfying ordering experience, but **nothing ever
-arrives — by design**. No real money moves, no real card data is ever collected,
-and 100% of orders are ghosted. That's the feature, not the bug.
+A complete food-delivery, rideshare, and travel-booking app where **nothing ever
+arrives — by design**. You get the full ordering experience; no real money moves,
+no real card data is ever collected, and 100% of orders are ghosted. That's the
+feature, not the bug.
+
+It began as a joke and turned into an exercise in finishing things. Everything a
+real delivery app ships, this ships: an installable PWA with a service worker and
+full offline support, an Electron desktop build with native notifications, an
+interactive world map with animated flight paths, and an iOS home-screen widget —
+in a single dependency-free HTML file.
+
+**Built with:** vanilla JS · PWA · Service Workers · Canvas · Electron · `localStorage`
 
 ## Features
 
