@@ -23,6 +23,7 @@
 </script>
 </head>
 <body>
+  <a class="skip-link" href="#main">Skip to content</a>
   <div class="wrap">
     <a class="site-header" href="index.html">
       <img src="icons/icon-192.png" alt="" />
@@ -39,14 +40,23 @@
       </ol>
     </nav>
 
-    <main class="card">
+    <main class="card" id="main" tabindex="-1">
       <h1>Privacy Policy</h1>
-      <p class="lede">Last updated: 6 September 2026</p>
+      <p class="lede">Last updated: 17 September 2026</p>
 
       <p style="margin-top:18px">
         <strong>The Placebo Effect is a novelty entertainment app.</strong> Orders, rides, trips,
         and payments in it are simulated and never real. This page explains what the app does and
         does not do with information, in plain language.
+      </p>
+
+      <h2 id="who">Who runs this</h2>
+      <p>
+        The Placebo Effect is an independent, non-commercial personal project — not a registered business,
+        with no offices and no staff. There is no company behind it and nothing is sold. Questions, corrections,
+        or takedown requests: <a href="mailto:matthewsanchez00024@gmail.com">matthewsanchez00024@gmail.com</a>,
+        or open an issue on <a href="https://github.com/matthew-6741/placebo-effect/issues" target="_blank" rel="noopener">GitHub</a>.
+        See also the <a href="terms.html">Terms of Service</a>.
       </p>
 
       <h2>What we do not collect</h2>
@@ -59,33 +69,73 @@
         <li>We do <strong>not</strong> sell or share personal information. There is none to sell.</li>
       </ul>
 
-      <h2>Data stored on your device</h2>
+      <h2 id="cookies">Cookies &amp; what's stored on your device</h2>
       <p>
-        The app saves your progress — ghost count, simulated "spend", fake wallet cards, chosen
-        city, squad list, theme, and sign-in name — in your browser's local storage
-        (<code>localStorage</code>). This stays on your device, is never sent to us, and you can
-        erase all of it any time by clearing site data in your browser.
+        <strong>This site sets no cookies of its own.</strong> Instead it saves your progress in your browser's
+        local storage (<code>localStorage</code>), which stays on your device and is never sent to us — there is
+        no server to send it to. Here's everything it writes:
+      </p>
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th scope="col">Name</th><th scope="col">What it holds</th><th scope="col">Type</th></tr></thead>
+          <tbody>
+            <tr><td><code>phantomStats</code></td><td>Times ghosted, simulated "spend", calories dodged</td><td>Local storage</td></tr>
+            <tr><td><code>phantomWallet</code>, <code>phantomDefault</code></td><td>Your fictional cards and which one is default</td><td>Local storage</td></tr>
+            <tr><td><code>phantomSquad</code>, <code>phantomHandle</code>, <code>phantomAvatar</code>, <code>phantomInvite</code>, <code>phantomSquadSeen</code></td><td>Squad list, your display name, avatar, invite code</td><td>Local storage</td></tr>
+            <tr><td><code>phantomCuisines</code></td><td>Cuisine passport stamps you've collected</td><td>Local storage</td></tr>
+            <tr><td><code>phantomUser</code></td><td>The email or guest flag from the on-device sign-in</td><td>Local storage</td></tr>
+            <tr><td><code>phantomMarket</code>, <code>phantomSpeed</code>, <code>phantomTheme</code>, <code>phantomIntroSeen</code></td><td>Chosen city, delivery speed, light/dark theme, whether you've seen the intro</td><td>Local storage</td></tr>
+            <tr><td><code>phantomConsent</code></td><td>Your analytics choice, if the banner is ever shown</td><td>Local storage</td></tr>
+            <tr><td>App shell cache</td><td>A copy of the pages so the app opens offline. No personal data.</td><td>Service worker cache</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small muted">
+        Third parties can set their own cookies if you opt in: Google Analytics (only after you accept the
+        banner) and Google's sign-in, if you connect Calendar. Details below.
       </p>
 
-      <h2 id="analytics">Analytics</h2>
+      <h2 id="analytics">Analytics &amp; consent</h2>
       <p>
-        This site is set up to optionally use <strong>Google Analytics 4</strong> to count visits
-        and see which pages people open. It is configured in
-        <code>assets/analytics.js</code> and is <strong>switched off unless a Measurement ID has
-        been added</strong> — while it's off, no Google script loads and nothing is sent anywhere.
+        This site is set up to optionally use <strong>Google Analytics 4</strong> to count visits and see which
+        pages people open. It is configured in <code>assets/analytics.js</code> and is
+        <strong>switched off unless a Measurement ID has been added</strong>. While it's off — which it is
+        today — no Google script loads, no analytics cookies are set, nothing is sent anywhere, and you won't
+        see a cookie banner, because there is nothing to consent to.
       </p>
       <p>
-        When it is switched on, Google receives standard web-analytics data: pages viewed,
-        approximate location derived from a truncated (anonymized) IP address, device and browser
-        type, and referring site. It is never linked to your in-app activity, your email, or your
-        fake wallet. If your browser sends a <em>Do Not Track</em> or
-        <em>Global Privacy Control</em> signal, analytics does not load at all.
+        If it is ever switched on, a consent banner appears first with equally weighted <em>Accept</em> and
+        <em>Reject</em> buttons, and <strong>Google's script only loads if you choose Accept</strong>. Choosing
+        Reject also clears any analytics cookies already set. Your choice is remembered on your device and can be
+        changed any time from the "Cookie settings" link in the footer. If your browser sends a
+        <em>Do Not Track</em> or <em>Global Privacy Control</em> signal, analytics never loads and you are
+        never asked.
+      </p>
+      <p>
+        When enabled and accepted, Google receives standard web-analytics data: pages viewed, approximate
+        location derived from a truncated (anonymized) IP address, device and browser type, and referring site.
+        It is never linked to your in-app activity, your email, or your fake wallet.
       </p>
 
-      <h2>Images</h2>
-      <p>
-        Food photos are loaded from TheMealDB, and city and vehicle photos from LoremFlickr. These
-        are ordinary, anonymous image requests to third-party services and contain no personal data.
+      <h2 id="third-parties">Third parties the app talks to</h2>
+      <p>This is the complete list. Nothing else is contacted, and no advertising or tracking SDKs are included.</p>
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th scope="col">Service</th><th scope="col">What for</th><th scope="col">When</th></tr></thead>
+          <tbody>
+            <tr><td>Wikimedia Commons (<code>upload.wikimedia.org</code>)</td><td>Food, city, and ride photos plus the world map — see <a href="credits.html">credits</a></td><td>Every page view that shows photos</td></tr>
+            <tr><td>TheMealDB</td><td>Photos for 26 dishes</td><td>When those dishes are shown</td></tr>
+            <tr><td>Google Maps (embedded map)</td><td>The map on the <a href="contact.html">contact page</a></td><td>Only after you click "Load the map"</td></tr>
+            <tr><td>Google Identity Services</td><td>Signing in to connect Google Calendar</td><td>Only after you tap "Connect Calendar"</td></tr>
+            <tr><td>Google Calendar API</td><td>Adding phantom events you asked for</td><td>Only while Calendar is connected</td></tr>
+            <tr><td>Google Analytics</td><td>Counting visits</td><td>Currently off; only if enabled and you accept</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small muted">
+        Photo requests are ordinary, anonymous image loads and carry no personal data, though the host does
+        see your IP address as any website you load an image from would. Each Google service is loaded only
+        at the moment it's needed, so if you never use the map or Calendar, your browser never contacts Google.
       </p>
 
       <h2>Contact form</h2>
@@ -117,7 +167,8 @@
           drafted with AI help and edited by a human.</li>
         <li><strong>The app icon and logo</strong> were generated using an AI image tool.</li>
         <li><strong>Food, city, and vehicle photography</strong> is <em>not</em> AI-generated — those
-          are real photographs from TheMealDB and Wikimedia Commons / LoremFlickr.</li>
+          are real photographs by real photographers, from Wikimedia Commons and TheMealDB, credited
+          individually on the <a href="credits.html">credits page</a>.</li>
       </ul>
       <p>
         AI was used as a building tool. It is not used to profile you, make decisions about you, or
@@ -125,10 +176,37 @@
         service, because nothing you type is sent anywhere at all.
       </p>
 
-      <h2>Children</h2>
+      <h2 id="children">Children &amp; age</h2>
       <p>
-        The Placebo Effect is a simple novelty app suitable for general audiences and collects no
-        personal data.
+        The app is a simple novelty suitable for general audiences, but it isn't directed at children under 13,
+        and the <a href="terms.html#age">Terms</a> ask you to be 13 or older to use it. We collect no personal
+        data from anyone, so there is nothing we could knowingly collect from a child either — what you type
+        stays in your own browser.
+      </p>
+      <p>
+        The two features that involve a third party do have age rules: connecting Google Calendar requires a
+        Google account (Google sets its own minimum age), and if analytics is ever enabled, the consent banner
+        asks anyone under 16 to choose Reject. A parent or guardian can wipe everything the app has stored with
+        the button below.
+      </p>
+
+      <h2 id="delete">Delete your data</h2>
+      <p>
+        Because everything lives in your browser, you're the only one who can delete it — and you don't have to
+        ask us. The button below erases every item the app has stored in <em>this</em> browser: ghost stats,
+        fake wallet cards, squad, cuisine passport, sign-in, and settings. It can't be undone.
+      </p>
+      <p>
+        <button type="button" class="btn danger" data-delete-data data-status="deleteStatus">Delete my data from this browser</button>
+      </p>
+      <p class="status" id="deleteStatus" role="status"></p>
+      <p class="small muted">
+        This only covers the browser you're using right now — repeat it on your other devices. You can also
+        clear site data in your browser settings, which does the same thing. If you connected Google Calendar,
+        the app drops its access when you delete, and you can also revoke it in your
+        <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener">Google Account settings</a>.
+        Since we hold no data about you on any server, there is nothing for us to delete on our end and no
+        request for you to file.
       </p>
 
       <h2>Changes</h2>
@@ -144,14 +222,19 @@
     <footer class="site-footer">
       The Placebo Effect is a novelty entertainment app — 100% placebo. No food is cooked, no driver is dispatched, no money moves.<br />
       Parts of this site and app were built with AI assistance — <a href="privacy-policy.html#ai">details here</a>.
-      <nav>
+      <nav aria-label="Site and legal">
         <a href="index.html">Home</a>
         <a href="contact.html">Contact</a>
-        <a href="privacy-policy.html">Privacy Policy</a>
+        <a href="terms.html">Terms</a>
+        <a href="privacy-policy.html">Privacy</a>
+        <a href="privacy-policy.html#cookies">Cookies</a>
+        <a href="credits.html">Credits</a>
+        <a href="#" data-cookie-settings>Cookie settings</a>
       </nav>
     </footer>
   </div>
 
   <script src="assets/analytics.js"></script>
+  <script src="assets/data-controls.js"></script>
 </body>
 </html>

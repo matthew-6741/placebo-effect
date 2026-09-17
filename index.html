@@ -17,8 +17,8 @@
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
 }
 </script>
-<!-- Google Identity Services (only used if you set GOOGLE_CLIENT_ID in the script below) -->
-<script src="https://accounts.google.com/gsi/client" async></script>
+<!-- Google Identity Services is loaded on demand by loadGis() — only after someone taps
+     "Connect Calendar" with a GOOGLE_CLIENT_ID configured. Nobody else ever contacts Google. -->
 <!-- PWA / installable + offline (helps clear "minimum functionality" review) -->
 <link rel="manifest" href="manifest.webmanifest" />
 <meta name="theme-color" content="#0e0f1a" />
@@ -37,15 +37,16 @@
     --line: #2c3056;
     --text: #eef0ff;
     --muted: #9aa0c7;
-    --accent: #7c5cff;
+    --accent: #7758f4;        /* fills behind white text (≥4.5:1) */
+    --accent-ink: #8f73ff;    /* accent-colored text on dark surfaces (≥4.5:1) */
     --accent2: #00d6a4;
     --warn: #ff8c5a;
     --danger: #ff5c7c;
     --shadow: 0 18px 50px rgba(0,0,0,.45);
     --r: 18px;
-    --grad2: #9b5cff;
-    --glow: var(--glow);
-    --accent-soft: var(--accent-soft);
+    --grad2: #8b53e5;
+    --glow: rgba(124,92,255,.35);
+    --accent-soft: rgba(124,92,255,.12);
     --overlay-bg: rgba(6,7,16,.78);
   }
   /* Light theme: white / red / gold (matches the app icon) */
@@ -56,13 +57,14 @@
     --card2: #fff8ee;
     --line: #e9dcc8;
     --text: #2b211b;
-    --muted: #97836d;
-    --accent: #d0342c;
-    --accent2: #b8860b;
+    --muted: #776756;
+    --accent: #c43129;
+    --accent-ink: #c43129;
+    --accent2: #886308;
     --warn: #d97706;
     --danger: #c92a2a;
     --shadow: 0 14px 34px rgba(96,44,20,.14);
-    --grad2: #e8972e;
+    --grad2: #a16920;
     --glow: rgba(208,52,44,.28);
     --accent-soft: rgba(208,52,44,.10);
     --overlay-bg: rgba(72,32,14,.42);
@@ -125,7 +127,7 @@
   .crumbs li { display: flex; align-items: center; gap: 6px; }
   .crumbs li + li::before { content: "›"; color: var(--line); }
   .crumbs a { color: var(--muted); text-decoration: none; cursor: pointer; }
-  .crumbs a:hover { color: var(--accent); text-decoration: underline; }
+  .crumbs a:hover { color: var(--accent-ink); text-decoration: underline; }
   .crumbs [aria-current="page"] { color: var(--text); font-weight: 600; }
 
   .view { display: none; animation: fade .35s ease; }
@@ -151,7 +153,7 @@
   .dish .desc { font-size: 12px; color: var(--muted); min-height: 32px; }
   .dish .row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
   .dish .price { font-weight: 800; color: var(--accent2); }
-  .dish .add { font-size: 12px; color: var(--accent); font-weight: 700; }
+  .dish .add { font-size: 12px; color: var(--accent-ink); font-weight: 700; }
 
   /* Cart bar */
   .cartbar {
@@ -288,7 +290,7 @@
 
   .paychip { font-size: 12.5px; background: var(--bg2); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; margin-bottom: 16px; }
   .paychip .muted2 { color: var(--muted); }
-  .paychip a { color: var(--accent); font-weight: 600; }
+  .paychip a { color: var(--accent-ink); font-weight: 600; }
 
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translate(-50%, 20px); background: var(--card2); border: 1px solid var(--line); color: var(--text); padding: 12px 18px; border-radius: 12px; font-size: 13px; box-shadow: var(--shadow); opacity: 0; transition: .3s; z-index: 70; }
   .toast.show { opacity: 1; transform: translate(-50%, 0); }
@@ -302,7 +304,7 @@
   #meName:focus { border-color: var(--accent); }
   .me-sub { font-size: 12px; color: var(--muted); margin-top: 7px; }
   .me-sub b { color: var(--text); letter-spacing: .5px; }
-  .copybtn { background: var(--bg2); border: 1px solid var(--line); color: var(--accent); border-radius: 6px; font-size: 11px; padding: 3px 9px; cursor: pointer; margin-left: 8px; font-family: inherit; }
+  .copybtn { background: var(--bg2); border: 1px solid var(--line); color: var(--accent-ink); border-radius: 6px; font-size: 11px; padding: 3px 9px; cursor: pointer; margin-left: 8px; font-family: inherit; }
   .copybtn:hover { border-color: var(--accent); }
   .addfriend { display: flex; gap: 8px; margin-bottom: 12px; }
   .addfriend input { flex: 1; min-width: 0; background: var(--bg2); border: 1px solid var(--line); color: var(--text); padding: 11px 13px; border-radius: 11px; font-size: 14px; font-family: inherit; outline: none; }
@@ -340,7 +342,7 @@
     color: var(--text); font-size: 17px; font-weight: 800; cursor: pointer; font-family: inherit;
     box-shadow: var(--shadow); transition: .15s;
   }
-  .zoom-ctl button:hover { border-color: var(--accent); color: var(--accent); }
+  .zoom-ctl button:hover { border-color: var(--accent); color: var(--accent-ink); }
   .zoom-ctl button:active { transform: scale(.92); }
   .zoom-ctl button#zoomReset { font-size: 15px; }
   .zoom-hint { position: absolute; left: 20px; bottom: 20px; font-size: 11px; color: var(--muted);
@@ -378,7 +380,7 @@
   .bp-end { text-align: center; }
   .bp-code { font-size: 26px; font-weight: 900; letter-spacing: 1px; }
   .bp-city { font-size: 11px; color: var(--muted); margin-top: 2px; }
-  .bp-mid { color: var(--accent); font-size: 18px; text-align: center; }
+  .bp-mid { color: var(--accent-ink); font-size: 18px; text-align: center; }
   .bp-dur { font-size: 10px; color: var(--muted); margin-top: 2px; }
   .bp-meta { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 16px; font-size: 11px; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 12px; }
   .bp-stub { width: 152px; flex: none; border-left: 2px dashed var(--line); padding: 16px; display: flex; flex-direction: column; justify-content: center; gap: 12px; background: var(--bg2); }
@@ -386,7 +388,7 @@
   .bp-stub .btn { padding: 12px; font-size: 14px; }
 
   /* Google Calendar connect chip */
-  .gcal-btn { background: var(--bg2); border: 1px solid var(--line); color: var(--accent); border-radius: 999px; padding: 5px 11px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: inherit; margin-bottom: 6px; transition: .15s; }
+  .gcal-btn { background: var(--bg2); border: 1px solid var(--line); color: var(--accent-ink); border-radius: 999px; padding: 5px 11px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: inherit; margin-bottom: 6px; transition: .15s; }
   .gcal-btn:hover { border-color: var(--accent); }
   .gcal-btn.on { background: rgba(0,214,164,.14); border-color: var(--accent2); color: var(--accent2); }
 
@@ -401,7 +403,7 @@
   .cat { flex: none; border: 1px solid var(--line); background: var(--bg2); color: var(--muted); border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; transition: .15s; }
   .cat:hover { border-color: var(--accent); color: var(--text); }
   .cat.sel { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .region-header { font-size: 13px; text-transform: uppercase; letter-spacing: 2px; color: var(--accent); font-weight: 800; margin: 28px 2px 4px; padding-bottom: 9px; border-bottom: 1px solid var(--line); }
+  .region-header { font-size: 13px; text-transform: uppercase; letter-spacing: 2px; color: var(--accent-ink); font-weight: 800; margin: 28px 2px 4px; padding-bottom: 9px; border-bottom: 1px solid var(--line); }
   .region-header:first-child { margin-top: 4px; }
   .cuisine-title { font-size: 15px; font-weight: 700; margin: 16px 2px 10px; display: flex; align-items: center; gap: 8px; color: var(--text); }
 
@@ -454,7 +456,7 @@
   }
   .ad-pop.show { transform: none; opacity: 1; }
   .ad-pop .ad-badge { position: absolute; top: -8px; left: 12px; background: var(--warn); color: #14151f; font-size: 9px; font-weight: 900; letter-spacing: 1px; border-radius: 5px; padding: 2px 7px; }
-  .ad-pop .ad-x { position: absolute; top: 6px; right: 8px; background: none; border: 0; color: var(--muted); font-size: 14px; cursor: pointer; padding: 2px 5px; }
+  .ad-pop .ad-x { position: absolute; top: 4px; right: 4px; background: none; border: 0; color: var(--text); font-size: 16px; cursor: pointer; min-width: 32px; min-height: 32px; border-radius: 8px; }
   .ad-pop .ad-x:hover { color: var(--danger); }
   .ad-pop .ad-body { display: flex; gap: 11px; align-items: center; }
   .ad-pop .ad-emoji { font-size: 34px; line-height: 1; }
@@ -464,9 +466,22 @@
   .ad-pop .ad-cta:hover { filter: brightness(1.08); }
 
   footer { text-align:center; color: var(--muted); font-size: 11px; margin-top: 34px; line-height: 1.6; }
+
+  /* ---------- accessibility ---------- */
+  :focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 2px; }
+  .field input:focus, #meName:focus, .addfriend input:focus { box-shadow: 0 0 0 3px var(--accent-soft); }
+  .overlay:focus, main:focus { outline: none; }
+  .skip-link { position: absolute; left: 12px; top: -60px; z-index: 200; background: var(--card); color: var(--text); border: 2px solid var(--accent); border-radius: 10px; padding: 8px 14px; font-weight: 700; text-decoration: none; }
+  .skip-link:focus { top: 12px; }
+  .login-consent { font-size: 12px; color: var(--muted); margin: 12px 0 0; text-align: center; line-height: 1.5; }
+  .login-consent a, footer a { color: var(--accent-ink); font-weight: 600; }
+  .footer-links { display: flex; gap: 8px 14px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
+  .linklike { background: none; border: 0; padding: 0; font: inherit; color: var(--accent-ink); font-weight: 600; cursor: pointer; }
+  .linklike:hover, footer a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to content</a>
 <div class="wrap">
   <header class="app">
     <div class="brand">
@@ -495,6 +510,8 @@
 
   <nav class="crumbs" id="crumbs" aria-label="Breadcrumb"></nav>
 
+  <main id="main" tabindex="-1">
+
   <!-- EATS -->
   <section class="view active" id="eats">
     <div class="market-bar">
@@ -517,11 +534,11 @@
     <div class="section-title">Where to (not)?</div>
     <div class="panel">
       <div class="field">
-        <label>Pickup</label>
+        <label for="from">Pickup</label>
         <input id="from" value="Your couch" />
       </div>
       <div class="field">
-        <label>Destination</label>
+        <label for="to">Destination</label>
         <input id="to" placeholder="Anywhere but here" value="The function" />
       </div>
       <div class="ride-types" id="rideTypes"></div>
@@ -554,7 +571,7 @@
 
     <div class="panel">
       <div class="field">
-        <label>Name on card (optional)</label>
+        <label for="ccName">Name on card (optional)</label>
         <input id="ccName" autocomplete="off" maxlength="22" placeholder="Your name" />
       </div>
       <div class="seg" id="brandSeg">
@@ -578,12 +595,12 @@
       <div class="me-row">
         <div class="avatar" id="meAvatar" title="tap to change">😎</div>
         <div class="me-main">
-          <input id="meName" maxlength="18" placeholder="Your name" />
+          <input id="meName" aria-label="Your squad name" maxlength="18" placeholder="Your name" />
           <div class="me-sub">Invite code <b id="inviteCode">PHANTOM-••••</b><button class="copybtn" id="copyInvite">copy</button></div>
         </div>
       </div>
       <div class="addfriend">
-        <input id="friendName" placeholder="Add a friend by name…" maxlength="18" />
+        <input id="friendName" aria-label="Add a friend by name" placeholder="Add a friend by name…" maxlength="18" />
         <button class="btn small" id="addFriend">Connect</button>
       </div>
       <div class="squad-note">📡 Phantom never goes online, so your squad is made of phantoms too — they ghost-order on their own, even while you're away. Out-spend them by placing more (free, fake) orders.</div>
@@ -598,14 +615,14 @@
     <div class="section-title">Phantom Travel — book the getaway, skip the airport</div>
 
     <div class="map-panel">
-      <svg viewBox="0 0 1000 500" class="worldmap" id="worldmap" preserveAspectRatio="xMidYMid meet">
+      <svg viewBox="0 0 1000 500" class="worldmap" id="worldmap" preserveAspectRatio="xMidYMid meet" role="img" aria-label="World map showing destinations and the flight path. Choose a destination from the list below.">
         <defs>
           <linearGradient id="arcGrad" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0" stop-color="#00d6a4" />
             <stop offset="1" stop-color="#7c5cff" />
           </linearGradient>
         </defs>
-        <!-- Real world map (equirectangular, public domain via Wikimedia Commons) -->
+        <!-- Real world map (equirectangular) by TUBS, CC BY-SA 3.0 via Wikimedia Commons — credited on credits.html -->
         <g id="mapZoom">
           <image class="mapimg" href="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/World_location_map_%28equirectangular_180%29.svg/1920px-World_location_map_%28equirectangular_180%29.svg.png"
                  x="0" y="0" width="1000" height="500" preserveAspectRatio="none" />
@@ -626,9 +643,9 @@
         </g>
       </svg>
       <div class="zoom-ctl">
-        <button id="zoomIn" title="zoom in">+</button>
-        <button id="zoomOut" title="zoom out">−</button>
-        <button id="zoomReset" title="reset view">⟲</button>
+        <button id="zoomIn" title="zoom in" aria-label="Zoom in">+</button>
+        <button id="zoomOut" title="zoom out" aria-label="Zoom out">−</button>
+        <button id="zoomReset" title="reset view" aria-label="Reset map view">⟲</button>
       </div>
       <div class="zoom-hint">🔍 scroll, pinch, or drag to explore</div>
     </div>
@@ -641,33 +658,44 @@
     </div>
     <div id="tripCard"></div>
   </section>
+  </main>
 
   <footer>
     The Placebo Effect is a novelty entertainment app — 100% placebo. No food is cooked, no driver is dispatched, no money moves.<br/>
     100% of orders are ghosted. That's the feature, not the bug.<br/>
-    Parts of this site and app were built with AI assistance — <a href="privacy-policy.html#ai" style="color:var(--accent);font-weight:600">details here</a>.
-    <span style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-top:8px">
-      <a href="contact.html" style="color:var(--accent);font-weight:600">Contact &amp; Directions</a>
-      <a href="privacy-policy.html" style="color:var(--accent);font-weight:600">Privacy Policy</a>
-    </span>
+    Parts of this site and app were built with AI assistance — <a href="privacy-policy.html#ai">details here</a>.<br/>
+    An independent, non-commercial project — not a registered business. Nothing is sold.
+    <nav class="footer-links" aria-label="Site and legal">
+      <a href="contact.html">Contact &amp; Directions</a>
+      <a href="terms.html">Terms</a>
+      <a href="terms.html#refunds">Refunds</a>
+      <a href="privacy-policy.html">Privacy</a>
+      <a href="privacy-policy.html#cookies">Cookies</a>
+      <a href="credits.html">Photo credits</a>
+      <a href="#" data-cookie-settings>Cookie settings</a>
+      <button type="button" class="linklike" data-delete-data data-reload>Delete my data</button>
+    </nav>
   </footer>
 </div>
 
 <!-- Login (on-device only — no servers, nothing is sent anywhere) -->
-<div class="overlay" id="loginOverlay">
+<div class="overlay" id="loginOverlay" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
   <div class="track" style="text-align:center">
-    <h2>Sign in to The Placebo Effect</h2>
+    <h2 id="loginTitle">Sign in to The Placebo Effect</h2>
     <div class="sub">One email. No password. Nothing real.</div>
     <div id="loginStep1" style="text-align:left">
-      <div class="field"><label>Email</label><input id="loginEmail" type="email" autocomplete="off" placeholder="you@example.com" /></div>
-      <div class="field"><label>Name (optional)</label><input id="loginName" maxlength="18" placeholder="Ghost with the most" /></div>
+      <div class="field"><label for="loginEmail">Email</label><input id="loginEmail" type="email" autocomplete="off" placeholder="you@example.com" /></div>
+      <div class="field"><label for="loginName">Name (optional)</label><input id="loginName" maxlength="18" placeholder="Ghost with the most" /></div>
       <button class="btn" id="loginContinue">Send magic code ✨</button>
       <button class="btn ghost" id="loginGuest" style="margin-top:10px">Continue as ghost 👻</button>
+      <p class="login-consent">By continuing either way, you confirm you're 13 or older and agree to the
+        <a href="terms.html" target="_blank" rel="noopener">Terms</a> and
+        <a href="privacy-policy.html" target="_blank" rel="noopener">Privacy Policy</a>.</p>
     </div>
     <div id="loginStep2" style="display:none">
       <div class="sub" style="margin:10px 0 4px">We'd email you this code… but Phantom never delivers anything. So here it is:</div>
       <div class="login-code" id="loginCodeShow"></div>
-      <div class="field" style="text-align:left"><label>Enter code (we pre-filled it — we're not monsters)</label><input id="loginCodeInput" inputmode="numeric" maxlength="4" /></div>
+      <div class="field" style="text-align:left"><label for="loginCodeInput">Enter code (we pre-filled it — we're not monsters)</label><input id="loginCodeInput" inputmode="numeric" maxlength="4" /></div>
       <button class="btn" id="loginVerify">Verify &amp; enter</button>
     </div>
     <div class="disclaimer" style="margin-top:14px;text-align:left">🔒 Your email never leaves this device. Phantom has no servers, sends nothing, and couldn't email you even if it wanted to.</div>
@@ -675,17 +703,17 @@
 </div>
 
 <!-- First-run novelty disclaimer -->
-<div class="overlay" id="introOverlay">
+<div class="overlay" id="introOverlay" role="dialog" aria-modal="true" aria-labelledby="introTitle">
   <div class="track" style="text-align:center">
     <img src="icons/icon-192.png" alt="" style="width:64px; height:64px; border-radius:15px; box-shadow:0 8px 22px rgba(160,40,20,.35);" />
-    <h2 style="margin-top:16px">The Placebo Effect is just for fun</h2>
+    <h2 id="introTitle" style="margin-top:16px">The Placebo Effect is just for fun</h2>
     <div class="sub" style="margin-bottom:18px">This is a <b>novelty entertainment app</b> — a placebo. Nothing here is real: no food, rides, or trips are ever ordered, no driver is sent, and <b>no payment is ever taken</b> (the wallet is fake and never asks for a real card). It exists purely for the dopamine of tapping "order." 🍔🚗✈️</div>
     <button class="btn" id="introOk">Got it — it's all pretend</button>
   </div>
 </div>
 
 <!-- Tracking overlay -->
-<div class="overlay" id="overlay">
+<div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="trackTitle">
   <div class="track">
     <h2 id="trackTitle">Order placed! 🎉</h2>
     <div class="sub" id="trackSub">Sit tight, good things are coming...</div>
@@ -722,7 +750,7 @@
 </div>
 
 <!-- Phantom receipt -->
-<div class="overlay" id="receiptOverlay">
+<div class="overlay" id="receiptOverlay" role="dialog" aria-modal="true" aria-label="Phantom receipt">
   <div class="receipt-wrap">
     <div class="receipt" id="receiptPaper"></div>
     <button class="btn ghost receipt-close" id="closeReceipt">Crumple it up (close)</button>
@@ -998,11 +1026,7 @@ function cuisinesInRegion(regionName) {
     (pri.includes(a.name) ? pri.indexOf(a.name) : 1e9) - (pri.includes(b.name) ? pri.indexOf(b.name) : 1e9));
 }
 
-const CITY_KW = {
-  "Tokyo": "tokyo", "Paris": "paris", "Bali": "bali", "New York": "newyork", "Reykjavík": "iceland",
-  "Rio": "rio", "Sydney": "sydney", "Cairo": "pyramids", "Quito": "quitoecuador", "Galápagos": "galapagosislands",
-};
-function hashStr(s) { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; }
+
 // Hand-verified photo per dish — every image is the finished plated food, no people.
 // Sources: TheMealDB + Wikimedia Commons (anonymous hotlinks, no tracking).
 const DISH_PHOTOS = {
@@ -1104,8 +1128,70 @@ const DISH_PHOTOS = {
   "Thieboudienne": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Ceebu_Jen%2C_Senegalese_dish.jpg/500px-Ceebu_Jen%2C_Senegalese_dish.jpg",
 };
 function foodPhoto(name) { return DISH_PHOTOS[name] || null; }
-function cityPhoto(city) { return `https://loremflickr.com/320/200/${encodeURIComponent(CITY_KW[city] || city.toLowerCase())}?lock=${hashStr(city) % 100000}`; }
-function vehiclePhoto(kw) { return `https://loremflickr.com/240/140/${encodeURIComponent(kw)}?lock=${hashStr(kw) % 100000}`; }
+// City and ride photos: each is one specific, freely licensed Wikimedia Commons file, chosen
+// by hand. Authors and licenses are credited on credits.html — keep that page in sync if you
+// change one. Anything missing here falls back to the emoji tile.
+const CITY_PHOTOS = {
+  "Tokyo": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Skyscrapers_of_Shinjuku_2009_January.jpg/500px-Skyscrapers_of_Shinjuku_2009_January.jpg",
+  "Paris": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/La_Tour_Eiffel_vue_de_la_Tour_Saint-Jacques%2C_Paris_ao%C3%BBt_2014_%282%29.jpg/500px-La_Tour_Eiffel_vue_de_la_Tour_Saint-Jacques%2C_Paris_ao%C3%BBt_2014_%282%29.jpg",
+  "Bali": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Tegallalang_Rice_Terraces_Bali_1.jpg/500px-Tegallalang_Rice_Terraces_Bali_1.jpg",
+  "New York": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/View_of_Empire_State_Building_from_Rockefeller_Center_New_York_City_dllu_%28cropped%29.jpg/500px-View_of_Empire_State_Building_from_Rockefeller_Center_New_York_City_dllu_%28cropped%29.jpg",
+  "Reykjavík": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Reykjav%C3%ADk%2C_view_from_Hallgr%C3%ADmskirkja_%282%29.jpg/500px-Reykjav%C3%ADk%2C_view_from_Hallgr%C3%ADmskirkja_%282%29.jpg",
+  "Rio": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/Cidade_Maravilhosa.jpg/500px-Cidade_Maravilhosa.jpg",
+  "Sydney": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Sydney_Opera_House_and_Harbour_Bridge_Dusk_%282%29_2019-06-21.jpg/500px-Sydney_Opera_House_and_Harbour_Bridge_Dusk_%282%29_2019-06-21.jpg",
+  "Cairo": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Cairo_Opera_House%2C_Al_Hurriyah_Park_and_the_Nile_river_%2814797782354%29.jpg/500px-Cairo_Opera_House%2C_Al_Hurriyah_Park_and_the_Nile_river_%2814797782354%29.jpg",
+  "Quito": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Quito_Panorama_of_El_Panecillo_from_Calle_Cuenca.jpg/500px-Quito_Panorama_of_El_Panecillo_from_Calle_Cuenca.jpg",
+  "Galápagos": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Lobo_marino_%28Zalophus_californianus_wollebaeki%29%2C_Punta_Pitt%2C_isla_de_San_Crist%C3%B3bal%2C_islas_Gal%C3%A1pagos%2C_Ecuador%2C_2015-07-24%2C_DD_11.JPG/500px-Lobo_marino_%28Zalophus_californianus_wollebaeki%29%2C_Punta_Pitt%2C_isla_de_San_Crist%C3%B3bal%2C_islas_Gal%C3%A1pagos%2C_Ecuador%2C_2015-07-24%2C_DD_11.JPG",
+  "London": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/London_Skyline_%28125508655%29.jpeg/500px-London_Skyline_%28125508655%29.jpeg",
+  "Rome": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Trevi_Fountain%2C_Rome%2C_Italy_2_-_May_2007.jpg/500px-Trevi_Fountain%2C_Rome%2C_Italy_2_-_May_2007.jpg",
+  "Barcelona": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Evening_light_over_Barcelona.jpg/500px-Evening_light_over_Barcelona.jpg",
+  "Lisbon": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Lisboa_-_Portugal_%2852597836992%29.jpg/500px-Lisboa_-_Portugal_%2852597836992%29.jpg",
+  "Amsterdam": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Canal_houses_and_Oude_Kerk_at_blue_hour_with_water_reflection_in_Damrak_Amsterdam_Netherlands.jpg/500px-Canal_houses_and_Oude_Kerk_at_blue_hour_with_water_reflection_in_Damrak_Amsterdam_Netherlands.jpg",
+  "Berlin": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/Museumsinsel_Berlin_Juli_2021_1_%28cropped%29_b.jpg/500px-Museumsinsel_Berlin_Juli_2021_1_%28cropped%29_b.jpg",
+  "Vienna": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Schloss_Sch%C3%B6nbrunn_Wien_2014_%28Zuschnitt_1%29.jpg/500px-Schloss_Sch%C3%B6nbrunn_Wien_2014_%28Zuschnitt_1%29.jpg",
+  "Athens": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Athens_Acropolis_at_Daybreak.jpg/500px-Athens_Acropolis_at_Daybreak.jpg",
+  "Santorini": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Oia%2C_Santorini_HDR_sunset.jpg/500px-Oia%2C_Santorini_HDR_sunset.jpg",
+  "Istanbul": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Historical_peninsula_and_modern_skyline_of_Istanbul.jpg/500px-Historical_peninsula_and_modern_skyline_of_Istanbul.jpg",
+  "Dubai": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Dubai_Skyline_mit_Burj_Khalifa_%28cropped%29.jpg/500px-Dubai_Skyline_mit_Burj_Khalifa_%28cropped%29.jpg",
+  "Marrakech": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Pavillon_Menarag%C3%A4rten.jpg/500px-Pavillon_Menarag%C3%A4rten.jpg",
+  "Cape Town": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Camps_bay_%2853460319478%29_%28cropped%29.jpg/500px-Camps_bay_%2853460319478%29_%28cropped%29.jpg",
+  "Nairobi": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Nairobi_City_County_Skyline.jpg/500px-Nairobi_City_County_Skyline.jpg",
+  "Bangkok": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/4Y1A1159_Bangkok_%2833536795515%29.jpg/500px-4Y1A1159_Bangkok_%2833536795515%29.jpg",
+  "Phuket": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Phuket_Aerial.jpg/500px-Phuket_Aerial.jpg",
+  "Singapore": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Skylines_of_the_Central_Business_District%2C_Singapore_at_dusk.jpg/500px-Skylines_of_the_Central_Business_District%2C_Singapore_at_dusk.jpg",
+  "Hong Kong": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Hong_Kong_Skyline_Restitch_-_Dec_2007.jpg/500px-Hong_Kong_Skyline_Restitch_-_Dec_2007.jpg",
+  "Seoul": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/%EC%A4%91%ED%99%94%EC%A0%84%EC%9D%98_%EB%82%AE.jpg/500px-%EC%A4%91%ED%99%94%EC%A0%84%EC%9D%98_%EB%82%AE.jpg",
+  "Kyoto": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Kyoto%2C_Japan_%2849667780482%29.jpg/500px-Kyoto%2C_Japan_%2849667780482%29.jpg",
+  "Shanghai": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Huangpu_Park_20124-Shanghai_%2832208802494%29.jpg/500px-Huangpu_Park_20124-Shanghai_%2832208802494%29.jpg",
+  "Beijing": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2d/Skyline_of_Beijing_CBD_with_B-5906_approaching_%2820211016171955%29_%281%29.jpg/500px-Skyline_of_Beijing_CBD_with_B-5906_approaching_%2820211016171955%29_%281%29.jpg",
+  "Mumbai": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Mumbai_Bandra-Worli_Sea_Link.jpg/500px-Mumbai_Bandra-Worli_Sea_Link.jpg",
+  "Delhi": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/Jama_Masjid_2011.jpg/500px-Jama_Masjid_2011.jpg",
+  "Maldives": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Diamonds_Thudufushi_Beach_and_Water_Villas%2C_May_2017_-09.jpg/500px-Diamonds_Thudufushi_Beach_and_Water_Villas%2C_May_2017_-09.jpg",
+  "Kathmandu": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Kathmandu-Durbar_Square-06-Mahavishnu-Kuh-Vishnu-Pratapamalla-Jagannath-2007-gje.jpg/500px-Kathmandu-Durbar_Square-06-Mahavishnu-Kuh-Vishnu-Pratapamalla-Jagannath-2007-gje.jpg",
+  "Auckland": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c9/Auckland_skyline_-_May_2024_%282%29.jpg/500px-Auckland_skyline_-_May_2024_%282%29.jpg",
+  "Queenstown": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c9/Queenstown_1_%288168013172%29.jpg/500px-Queenstown_1_%288168013172%29.jpg",
+  "Fiji": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Beach_on_Naviti_island%2C_Yasawa_Islands%2C_Fiji_%281%29_-_August_2016.jpg/500px-Beach_on_Naviti_island%2C_Yasawa_Islands%2C_Fiji_%281%29_-_August_2016.jpg",
+  "Honolulu": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/2022_Views_from_Diamond_Head_02.jpg/500px-2022_Views_from_Diamond_Head_02.jpg",
+  "Los Angeles": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Hollywood_sign_%288485145044%29.jpg/500px-Hollywood_sign_%288485145044%29.jpg",
+  "San Francisco": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Zeppelin-ride-020100925-195_%285029394846%29.jpg/500px-Zeppelin-ride-020100925-195_%285029394846%29.jpg",
+  "Vancouver": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/Skyline_of_Vancouver%2C_Canada.jpg/500px-Skyline_of_Vancouver%2C_Canada.jpg",
+  "Toronto": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Toronto_Skyline_from_Olympic_Island%2C_June_20_2026_%285-3_cropped%29.jpg/500px-Toronto_Skyline_from_Olympic_Island%2C_June_20_2026_%285-3_cropped%29.jpg",
+  "Mexico City": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Sobrevuelos_CDMX_HJ2A4913_%2825514321687%29_%28cropped%29.jpg/500px-Sobrevuelos_CDMX_HJ2A4913_%2825514321687%29_%28cropped%29.jpg",
+  "Cancún": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Cancun_Strand_Luftbild_%2822143397586%29.jpg/500px-Cancun_Strand_Luftbild_%2822143397586%29.jpg",
+  "Havana": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/DJI_0197_crp_wiki.jpg/500px-DJI_0197_crp_wiki.jpg",
+  "Bogotá": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Bogota%2C_Colombia_%2836668708290%29.jpg/500px-Bogota%2C_Colombia_%2836668708290%29.jpg",
+  "Lima": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Bas%C3%ADlica_Catedral_Metropolitana_de_Lima_%28cropped%29.jpg/500px-Bas%C3%ADlica_Catedral_Metropolitana_de_Lima_%28cropped%29.jpg",
+  "Cusco": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Vista_Calle_Suecia.jpg/500px-Vista_Calle_Suecia.jpg",
+  "Buenos Aires": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Puerto_Madero%2C_Buenos_Aires_%2840689219792%29_%28cropped%29.jpg/500px-Puerto_Madero%2C_Buenos_Aires_%2840689219792%29_%28cropped%29.jpg",
+  "Cartagena": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Cartagena%2C_Colombia_%285049256137%29.jpg/500px-Cartagena%2C_Colombia_%285049256137%29.jpg",
+};
+const VEHICLE_PHOTOS = {
+  "sedan": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Toyota_Camry_2.5_Hybrid_Ascent_Sport_%28IX%29_%E2%80%93_f_02012026.jpg/500px-Toyota_Camry_2.5_Hybrid_Ascent_Sport_%28IX%29_%E2%80%93_f_02012026.jpg",
+  "suv": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/97-01_Jeep_Cherokee.jpg/500px-97-01_Jeep_Cherokee.jpg",
+  "luxury-car": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/RR_Phantom_V_James_Young_Sedanca_de_Ville.jpg/500px-RR_Phantom_V_James_Young_Sedanca_de_Ville.jpg",
+};
+function cityPhoto(city) { return CITY_PHOTOS[city] || ""; }
+function vehiclePhoto(kw) { return VEHICLE_PHOTOS[kw] || ""; }
 function imgFallback(img) { img.style.display = "none"; }
 
 function renderMarketBar() {
@@ -1485,7 +1571,7 @@ function renderWallet() {
       <div class="wic">💳</div>
       <div class="wmain"><div class="wt">${label}</div><div class="ws">${sub}</div></div>
       ${isDef ? `<span class="wdef" style="cursor:default">Default</span>` : `<span class="wdef" data-def="${m.id}">Set default</span>`}
-      <button class="wdel" data-del="${m.id}">✕</button>`;
+      <button class="wdel" data-del="${m.id}" aria-label="Delete ${label}">✕</button>`;
     list.appendChild(el);
   });
   list.querySelectorAll("[data-def]").forEach(s => s.onclick = () => { defaultId = s.dataset.def; saveWallet(); renderWallet(); });
@@ -1511,7 +1597,7 @@ function setPayChip(total) {
 }
 
 function toast(msg) {
-  const t = document.createElement("div"); t.className = "toast"; t.innerHTML = msg;
+  const t = document.createElement("div"); t.className = "toast"; t.setAttribute("role", "status"); t.innerHTML = msg;
   document.body.appendChild(t);
   requestAnimationFrame(() => t.classList.add("show"));
   setTimeout(() => { t.classList.remove("show"); setTimeout(() => t.remove(), 320); }, 2600);
@@ -1627,7 +1713,7 @@ function renderTiers() {
         ${m === leader ? '<span class="crown">👑</span>' : ""}
         <span class="av">${m.av}</span>
         <span><div class="mn">${escapeHtml(m.name)}${m.you ? " (you)" : ""}</div><div class="ms">$${Math.round(m.spent)} ghost-spent</div></span>
-        ${m.you ? "" : `<button class="rm" data-rm="${m.id}" title="remove">✕</button>`}`;
+        ${m.you ? "" : `<button class="rm" data-rm="${m.id}" title="remove" aria-label="Remove ${escapeHtml(m.name)} from squad">✕</button>`}`;
       box.appendChild(chip);
     });
     row.appendChild(box);
@@ -1905,6 +1991,21 @@ const GOOGLE_CLIENT_ID = "";
 
 let gcalToken = null;
 let gcalClient = null;
+// Google's sign-in script is only requested once someone actually asks for Calendar sync,
+// so visitors who never tap "Connect Calendar" never send Google a single request.
+let gisPromise = null;
+function loadGis() {
+  if (gcalReady()) return Promise.resolve();
+  if (!gisPromise) gisPromise = new Promise((resolve, reject) => {
+    const sc = document.createElement("script");
+    sc.src = "https://accounts.google.com/gsi/client";
+    sc.async = true;
+    sc.onload = resolve;
+    sc.onerror = () => { gisPromise = null; reject(new Error("Google sign-in failed to load")); };
+    document.head.appendChild(sc);
+  });
+  return gisPromise;
+}
 function gcalReady() { return typeof google !== "undefined" && google.accounts && google.accounts.oauth2; }
 function updateGcalBtn() {
   const b = document.getElementById("gcalBtn");
@@ -1917,7 +2018,12 @@ function gcalConnect() {
     toast("🗓️ Add a Google Client ID in the code (see comments) to switch Calendar sync on");
     return;
   }
-  if (!gcalReady()) { toast("Google sign-in still loading — try again in a sec"); return; }
+  if (!gcalReady()) {
+    // Fetch Google's script now; the OAuth popup has to come from a fresh tap, so ask for one.
+    loadGis().then(() => toast("🗓️ Google sign-in ready — tap Connect Calendar again"))
+             .catch(() => toast("Couldn't load Google sign-in — check your connection"));
+    return;
+  }
   if (!gcalClient) {
     gcalClient = google.accounts.oauth2.initTokenClient({
       client_id: GOOGLE_CLIENT_ID,
@@ -2032,6 +2138,94 @@ document.getElementById("acctChip").onclick = () => {
 renderAcct();
 if (phantomUser) maybeShowIntro();
 else loginOv.classList.add("show");
+
+/* ---------- keyboard + screen-reader support ---------- */
+// Cards and chips that behave like buttons are made focusable and labelled here, in one
+// place, so every render path (menus, rides, wallet, travel) stays keyboard-usable.
+// Map pins are skipped on purpose: the destination cards below the map do the same job.
+const a11yText = (el, sel) => (el.querySelector(sel)?.textContent || "").trim();
+const A11Y_BUTTONS = [
+  [".dish", el => `Add ${a11yText(el, ".name")} to cart, ${a11yText(el, ".price")}`],
+  [".rt", el => `${a11yText(el, ".t")} ride, ${a11yText(el, ".p")}`],
+  [".destcard", el => `${a11yText(el, ".dcc")}, ${a11yText(el, ".dch")}, ${a11yText(el, ".dcp")}`],
+  ["[data-def]", () => "Set as default card"],
+  ["#cardPrev", () => "Flip the card preview"],
+  ["#meAvatar", () => "Change your avatar"],
+];
+function enhanceA11y() {
+  A11Y_BUTTONS.forEach(([sel, label]) => document.querySelectorAll(sel).forEach(el => {
+    if (!el.hasAttribute("data-a11y-btn")) {
+      el.setAttribute("data-a11y-btn", "");
+      el.setAttribute("role", "button");
+      el.tabIndex = 0;
+    }
+    el.setAttribute("aria-label", label(el));
+  }));
+  document.querySelectorAll(".rt, .destcard, .cat, .seg button, .market-toggle button")
+    .forEach(el => el.setAttribute("aria-pressed", el.classList.contains("sel")));
+  document.querySelectorAll(".tabs button").forEach(el =>
+    el.classList.contains("active") ? el.setAttribute("aria-current", "page") : el.removeAttribute("aria-current"));
+}
+let a11yQueued = false;
+new MutationObserver(() => {
+  if (a11yQueued) return;
+  a11yQueued = true;
+  requestAnimationFrame(() => { a11yQueued = false; enhanceA11y(); });
+}).observe(document.querySelector(".wrap"), { subtree: true, childList: true, attributes: true, attributeFilter: ["class"] });
+enhanceA11y();
+
+// Dialogs: move focus in when one opens, keep Tab inside it, restore focus when it closes.
+const DIALOG_IDS = ["loginOverlay", "introOverlay", "overlay", "receiptOverlay"];
+const topDialog = () => DIALOG_IDS.map(id => document.getElementById(id)).filter(o => o && o.classList.contains("show")).pop();
+const focusablesIn = (root) => [...root.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), textarea, select, [tabindex]:not([tabindex="-1"])')]
+  .filter(el => el.getClientRects().length > 0);
+let focusBeforeDialog = null;
+DIALOG_IDS.forEach(id => {
+  const dlg = document.getElementById(id);
+  if (!dlg) return;
+  dlg.tabIndex = -1;
+  new MutationObserver(() => {
+    const open = dlg.classList.contains("show");
+    if (open && !dlg.dataset.open) {
+      dlg.dataset.open = "1";
+      if (!focusBeforeDialog || !document.contains(focusBeforeDialog)) focusBeforeDialog = document.activeElement;
+      // Focus the dialog itself (not its first input) so phones don't pop the keyboard.
+      setTimeout(() => dlg.focus(), 30);
+    } else if (!open && dlg.dataset.open) {
+      delete dlg.dataset.open;
+      if (!topDialog() && focusBeforeDialog && document.contains(focusBeforeDialog)) {
+        focusBeforeDialog.focus();
+        focusBeforeDialog = null;
+      }
+    }
+  }).observe(dlg, { attributes: true, attributeFilter: ["class"] });
+});
+
+document.addEventListener("keydown", (e) => {
+  const dlg = topDialog();
+  if (e.key === "Escape") {
+    if (dlg?.id === "receiptOverlay") document.getElementById("closeReceipt").click();
+    else if (dlg?.id === "overlay") document.getElementById("closeTrack").click();
+    else if (!dlg && document.getElementById("adPop")) dismissAd();
+    // Sign-in and the first-run notice need a deliberate choice, so Escape leaves them open.
+    return;
+  }
+  if (e.key === "Tab" && dlg) {
+    const items = focusablesIn(dlg);
+    if (!items.length) { e.preventDefault(); return; }
+    const first = items[0], last = items[items.length - 1];
+    if (e.shiftKey && (document.activeElement === first || document.activeElement === dlg)) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && (document.activeElement === last || !dlg.contains(document.activeElement))) { e.preventDefault(); first.focus(); }
+    return;
+  }
+  if ((e.key === "Enter" || e.key === " ") && e.target.matches?.("[data-a11y-btn]")) {
+    e.preventDefault();
+    e.target.click();
+  }
+});
+
+// "Delete my data" (assets/data-controls.js) calls this first so Google access is revoked too.
+window.beforePlaceboDelete = () => { if (gcalToken) gcalDisconnect(); };
 
 /* ---------- offline support (PWA service worker) ---------- */
 if ("serviceWorker" in navigator) {
@@ -2161,7 +2355,7 @@ function showAd(ad) {
   el.id = "adPop";
   el.innerHTML = `
     <span class="ad-badge">AD</span>
-    <button class="ad-x" title="close">✕</button>
+    <button class="ad-x" title="close" aria-label="Close ad">✕</button>
     <div class="ad-body">
       <div class="ad-emoji">${ad.emoji}</div>
       <div><div class="ad-title">${ad.title}</div><div class="ad-line">${ad.line}</div></div>
@@ -2206,5 +2400,6 @@ function confettiBurst() {
 }
 </script>
 <script src="assets/analytics.js"></script>
+<script src="assets/data-controls.js"></script>
 </body>
 </html>

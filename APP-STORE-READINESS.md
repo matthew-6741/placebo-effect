@@ -22,7 +22,8 @@ Plus this readiness kit:
 
 **Features built:** Phantom Eats (NYC/LA markets, region→cuisine menu w/ photos),
 Phantom Ride, Wallet (placebo), Squad tier list, Travel (world map + booking),
-optional Google Calendar sync. All state in `localStorage`. Images load from LoremFlickr.
+optional Google Calendar sync. All state in `localStorage`. Photos load from Wikimedia Commons
+and TheMealDB, with per-photo authors and licenses listed in `credits.html`.
 
 To run locally: open `index.html` in a browser, or
 `cd ~/phantom-app && python3 -m http.server 4137` → http://localhost:4137/index.html
@@ -106,6 +107,12 @@ generates store-ready iOS/Android/Windows packages for you.
       "no data collected". If you ever fill that ID in, you must go back and declare
       **Analytics / Usage Data** and **Identifiers** on both forms, and the app becomes
       subject to Apple's App Tracking Transparency questions. Decide before you submit.
+- [ ] **Account deletion.** Apple 5.1.1(v) requires in-app account deletion whenever an app offers
+      account creation. The sign-in here is on-device only, and "Delete my data" in the footer (and on
+      the privacy page) wipes everything — point the reviewer at it in App Review notes.
+- [ ] **Photo licensing.** 126 photos come from Wikimedia Commons under CC/public-domain licenses and are
+      credited in `credits.html`; 26 come from TheMealDB, which publishes no per-image license and asks
+      for a paid Patreon tier for production use. Replace those 26 before shipping anything commercial.
 - [ ] Generate **app icons** (1024², plus all sizes) and **store screenshots**.
 - [ ] Set an appropriate **age rating**, and keep the listing wording as a *novelty/parody*
       app (don't compare it to real delivery brands).

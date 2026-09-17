@@ -21,6 +21,7 @@
 </style>
 </head>
 <body>
+  <a class="skip-link" href="#main">Skip to content</a>
   <div class="wrap">
     <a class="site-header" href="index.html">
       <img src="icons/icon-192.png" alt="" />
@@ -38,7 +39,7 @@
       </ol>
     </nav>
 
-    <main class="card">
+    <main class="card" id="main" tabindex="-1">
       <div class="tick">✓</div>
       <h1>Thanks — that went nowhere.</h1>
       <p class="lede">Exactly as promised. Your message was never sent, stored, or read by anyone.</p>
@@ -66,10 +67,14 @@
     <footer class="site-footer">
       The Placebo Effect is a novelty entertainment app — 100% placebo. No food is cooked, no driver is dispatched, no money moves.<br />
       Parts of this site and app were built with AI assistance — <a href="privacy-policy.html#ai">details here</a>.
-      <nav>
+      <nav aria-label="Site and legal">
         <a href="index.html">Home</a>
         <a href="contact.html">Contact</a>
-        <a href="privacy-policy.html">Privacy Policy</a>
+        <a href="terms.html">Terms</a>
+        <a href="privacy-policy.html">Privacy</a>
+        <a href="privacy-policy.html#cookies">Cookies</a>
+        <a href="credits.html">Credits</a>
+        <a href="#" data-cookie-settings>Cookie settings</a>
       </nav>
     </footer>
   </div>

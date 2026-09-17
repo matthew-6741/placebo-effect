@@ -1,6 +1,6 @@
 // Phantom service worker — caches the app shell so it opens offline.
 // (Remote photos from LoremFlickr fall back to emoji tiles when offline.)
-const CACHE = "phantom-v20"; // bump this whenever index.html changes
+const CACHE = "phantom-v21"; // bump this whenever index.html changes
 const ASSETS = [
   "./",
   "./index.html",
@@ -11,6 +11,9 @@ const ASSETS = [
   "./404.html",
   "./assets/page.css",
   "./assets/analytics.js",
+  "./assets/data-controls.js",
+  "./terms.html",
+  "./credits.html",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
   "./icons/icon-180.png",
@@ -18,7 +21,11 @@ const ASSETS = [
 
 self.addEventListener("install", (e) => {
   e.waitUntil(
-    caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting())
+    caches.open(CACHE)
+      // cache: "reload" bypasses the browser's HTTP cache, so a new version never
+      // captures a stale copy of a file that was fetched before the update.
+      .then((c) => c.addAll(ASSETS.map((u) => new Request(u, { cache: "reload" }))))
+      .then(() => self.skipWaiting())
   );
 });
 
