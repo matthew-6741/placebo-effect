@@ -3,57 +3,155 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>The Placebo Effect — Privacy Policy</title>
-<style>
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    max-width: 720px; margin: 0 auto; padding: 32px 20px 80px; line-height: 1.6; color: #1c1f2e; }
-  h1 { font-size: 26px; } h2 { font-size: 18px; margin-top: 28px; }
-  code { background: #f0f1f6; padding: 1px 5px; border-radius: 4px; }
-  .muted { color: #666; font-size: 14px; }
-</style>
+<title>Privacy Policy | The Placebo Effect</title>
+<meta name="description" content="What The Placebo Effect does and doesn't collect, plus a plain-English note about where AI was used to build it." />
+<link rel="icon" type="image/png" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/icon-180.png" />
+<link rel="stylesheet" href="assets/page.css" />
+<script>
+  try { if ((localStorage.getItem("phantomTheme") || "light") === "light") document.documentElement.classList.add("light"); } catch (e) {}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "index.html" },
+    { "@type": "ListItem", "position": 2, "name": "Privacy Policy" }
+  ]
+}
+</script>
 </head>
 <body>
-  <h1>The Placebo Effect — Privacy Policy</h1>
-  <p class="muted">Last updated: 30 June 2026</p>
+  <div class="wrap">
+    <a class="site-header" href="index.html">
+      <img src="icons/icon-192.png" alt="" />
+      <span>
+        <div class="name">The Placebo Effect</div>
+        <div class="tag">order the dopamine — skip the delivery</div>
+      </span>
+    </a>
 
-  <p><strong>Phantom is a novelty entertainment app.</strong> Orders, rides, trips, and payments
-  in the app are simulated and never real. This policy explains what data the app does and does
-  not handle.</p>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <ol>
+        <li><a href="index.html">Home</a></li>
+        <li><span aria-current="page">Privacy Policy</span></li>
+      </ol>
+    </nav>
 
-  <h2>What we do NOT collect</h2>
-  <ul>
-    <li>We do <strong>not</strong> ask for, accept, or store real credit/debit card numbers, CVCs,
-      or bank details. The in-app "wallet" generates fake cards for display only.</li>
-    <li>We do <strong>not</strong> take any payments. Nothing is ever charged.</li>
-    <li>We do <strong>not</strong> require an account, name, email, or phone number.</li>
-    <li>We do <strong>not</strong> use analytics, advertising, or third-party trackers.</li>
-    <li>We do <strong>not</strong> sell or share any personal information.</li>
-  </ul>
+    <main class="card">
+      <h1>Privacy Policy</h1>
+      <p class="lede">Last updated: 6 September 2026</p>
 
-  <h2>Data stored on your device</h2>
-  <p>The app saves your in-app progress (ghost count, simulated "spend," fake wallet cards, chosen
-  city, squad list) in your browser/device local storage (<code>localStorage</code>). This stays on
-  your device, is never transmitted to us, and can be cleared at any time by clearing site data.</p>
+      <p style="margin-top:18px">
+        <strong>The Placebo Effect is a novelty entertainment app.</strong> Orders, rides, trips,
+        and payments in it are simulated and never real. This page explains what the app does and
+        does not do with information, in plain language.
+      </p>
 
-  <h2>Images</h2>
-  <p>Food photos are loaded from TheMealDB, and city/vehicle photos from LoremFlickr — both
-  third-party image services. These are standard, anonymous image requests and contain no
-  personal data.</p>
+      <h2>What we do not collect</h2>
+      <ul>
+        <li>We do <strong>not</strong> ask for, accept, or store real credit or debit card numbers,
+          CVCs, or bank details. The in-app "wallet" generates fake cards for display only.</li>
+        <li>We do <strong>not</strong> take payments. Nothing is ever charged.</li>
+        <li>We do <strong>not</strong> require an account. The optional sign-in is on-device only —
+          your email is never transmitted, because there is no server to transmit it to.</li>
+        <li>We do <strong>not</strong> sell or share personal information. There is none to sell.</li>
+      </ul>
 
-  <h2>Google Calendar (optional)</h2>
-  <p>If you choose to connect Google Calendar, the app uses Google OAuth and the
-  <code>calendar.events</code> permission solely to <em>add</em> playful "phantom" events to your
-  primary calendar when you place a simulated order. The app does not read, store, or transmit your
-  existing calendar data, and the connection is entirely optional and user-initiated. You can revoke
-  access at any time in your Google Account settings.</p>
+      <h2>Data stored on your device</h2>
+      <p>
+        The app saves your progress — ghost count, simulated "spend", fake wallet cards, chosen
+        city, squad list, theme, and sign-in name — in your browser's local storage
+        (<code>localStorage</code>). This stays on your device, is never sent to us, and you can
+        erase all of it any time by clearing site data in your browser.
+      </p>
 
-  <h2>Children</h2>
-  <p>Phantom is a simple novelty app suitable for general audiences and collects no personal data.</p>
+      <h2 id="analytics">Analytics</h2>
+      <p>
+        This site is set up to optionally use <strong>Google Analytics 4</strong> to count visits
+        and see which pages people open. It is configured in
+        <code>assets/analytics.js</code> and is <strong>switched off unless a Measurement ID has
+        been added</strong> — while it's off, no Google script loads and nothing is sent anywhere.
+      </p>
+      <p>
+        When it is switched on, Google receives standard web-analytics data: pages viewed,
+        approximate location derived from a truncated (anonymized) IP address, device and browser
+        type, and referring site. It is never linked to your in-app activity, your email, or your
+        fake wallet. If your browser sends a <em>Do Not Track</em> or
+        <em>Global Privacy Control</em> signal, analytics does not load at all.
+      </p>
 
-  <h2>Changes</h2>
-  <p>We may update this policy; the "last updated" date will change accordingly.</p>
+      <h2>Images</h2>
+      <p>
+        Food photos are loaded from TheMealDB, and city and vehicle photos from LoremFlickr. These
+        are ordinary, anonymous image requests to third-party services and contain no personal data.
+      </p>
 
-  <h2>Contact</h2>
-  <p>Questions about this policy: <a href="mailto:matthewsanchez00024@gmail.com">matthewsanchez00024@gmail.com</a></p>
+      <h2>Contact form</h2>
+      <p>
+        The form on the <a href="contact.html">contact page</a> does not submit anywhere. There is
+        no inbox and no database behind it. What you type stays in your browser and is discarded
+        when you navigate away or close the tab.
+      </p>
+
+      <h2>Google Calendar (optional)</h2>
+      <p>
+        If you choose to connect Google Calendar, the app uses Google OAuth and the
+        <code>calendar.events</code> permission solely to <em>add</em> playful "phantom" events to
+        your primary calendar when you place a simulated order. The app does not read, store, or
+        transmit your existing calendar data, and the connection is entirely optional and
+        user-initiated. You can revoke access at any time in your Google Account settings.
+      </p>
+
+      <h2 id="ai">Use of AI</h2>
+      <p>
+        <strong>Parts of this website, its code, its copy, and its imagery were created with the
+        help of AI tools.</strong> We think you should know that, so here is specifically where:
+      </p>
+      <ul>
+        <li><strong>Code.</strong> Much of the app's HTML, CSS, and JavaScript — including the
+          ordering flow, maps, wallet, and these pages — was written with AI assistance and
+          reviewed by a human before publishing.</li>
+        <li><strong>Written copy.</strong> Menu descriptions, marketing emails, and page text were
+          drafted with AI help and edited by a human.</li>
+        <li><strong>The app icon and logo</strong> were generated using an AI image tool.</li>
+        <li><strong>Food, city, and vehicle photography</strong> is <em>not</em> AI-generated — those
+          are real photographs from TheMealDB and Wikimedia Commons / LoremFlickr.</li>
+      </ul>
+      <p>
+        AI was used as a building tool. It is not used to profile you, make decisions about you, or
+        process any information you enter — nothing you type in this app is ever sent to an AI
+        service, because nothing you type is sent anywhere at all.
+      </p>
+
+      <h2>Children</h2>
+      <p>
+        The Placebo Effect is a simple novelty app suitable for general audiences and collects no
+        personal data.
+      </p>
+
+      <h2>Changes</h2>
+      <p>We may update this policy; the "last updated" date above will change accordingly.</p>
+
+      <h2>Contact</h2>
+      <p>
+        Questions about this policy:
+        <a href="mailto:matthewsanchez00024@gmail.com">matthewsanchez00024@gmail.com</a>
+      </p>
+    </main>
+
+    <footer class="site-footer">
+      The Placebo Effect is a novelty entertainment app — 100% placebo. No food is cooked, no driver is dispatched, no money moves.<br />
+      Parts of this site and app were built with AI assistance — <a href="privacy-policy.html#ai">details here</a>.
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="contact.html">Contact</a>
+        <a href="privacy-policy.html">Privacy Policy</a>
+      </nav>
+    </footer>
+  </div>
+
+  <script src="assets/analytics.js"></script>
 </body>
 </html>

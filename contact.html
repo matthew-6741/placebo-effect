@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Contact &amp; Find Us | The Placebo Effect</title>
+<meta name="description" content="Get in touch with The Placebo Effect, and find directions to a headquarters that does not exist." />
+<link rel="icon" type="image/png" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/icon-180.png" />
+<link rel="stylesheet" href="assets/page.css" />
+<script>
+  try { if ((localStorage.getItem("phantomTheme") || "light") === "light") document.documentElement.classList.add("light"); } catch (e) {}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "index.html" },
+    { "@type": "ListItem", "position": 2, "name": "Contact" }
+  ]
+}
+</script>
+</head>
+<body>
+  <div class="wrap">
+    <a class="site-header" href="index.html">
+      <img src="icons/icon-192.png" alt="" />
+      <span>
+        <div class="name">The Placebo Effect</div>
+        <div class="tag">order the dopamine — skip the delivery</div>
+      </span>
+    </a>
+
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <ol>
+        <li><a href="index.html">Home</a></li>
+        <li><span aria-current="page">Contact</span></li>
+      </ol>
+    </nav>
+
+    <main class="card">
+      <h1>Contact us</h1>
+      <p class="lede">We read everything. We reply to nothing. Tradition.</p>
+
+      <div class="note" style="margin-top:20px">
+        <b>Being upfront:</b> this form doesn't send anywhere. The Placebo Effect has no servers
+        and no inbox — whatever you type stays in your browser and is discarded when you leave.
+        It's here so the site feels complete, not to collect your details.
+      </div>
+
+      <form id="contactForm" novalidate>
+        <div class="field">
+          <label for="cname">Your name</label>
+          <input id="cname" name="name" type="text" autocomplete="name" placeholder="Ghost with the most" required />
+        </div>
+        <div class="field">
+          <label for="cemail">Email</label>
+          <input id="cemail" name="email" type="email" autocomplete="email" placeholder="you@example.com" required />
+        </div>
+        <div class="field">
+          <label for="cmsg">Message</label>
+          <textarea id="cmsg" name="message" placeholder="Where is my food? (We know. It isn't coming.)" required></textarea>
+        </div>
+        <p id="formError" class="small" style="color:#d94b3f; display:none; margin:0 0 12px">
+          Please fill in every field with a valid email first.
+        </p>
+        <button class="btn" type="submit">Send into the void →</button>
+      </form>
+
+      <hr />
+
+      <h2>Find us</h2>
+      <p class="small muted" style="margin-bottom:16px">
+        Phantom HQ, 14th floor of a building that isn't there. The map below points at the
+        neighborhood; the office itself is as real as the delivery.
+      </p>
+
+      <!-- To point this at a real address, change the two places marked DESTINATION below. -->
+      <div class="map-frame">
+        <iframe
+          title="Map showing the Phantom HQ neighborhood in Manhattan, New York"
+          src="https://www.google.com/maps?q=Manhattan,+New+York,+NY&z=12&output=embed"
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          allowfullscreen></iframe>
+      </div>
+
+      <div class="btn-row">
+        <!-- DESTINATION -->
+        <a class="btn" href="https://www.google.com/maps/dir/?api=1&destination=Manhattan%2C+New+York%2C+NY"
+           target="_blank" rel="noopener noreferrer">Get directions →</a>
+        <a class="btn ghost" href="index.html">Back to the app</a>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      The Placebo Effect is a novelty entertainment app — 100% placebo. No food is cooked, no driver is dispatched, no money moves.<br />
+      Parts of this site and app were built with AI assistance — <a href="privacy-policy.html#ai">details here</a>.
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="contact.html">Contact</a>
+        <a href="privacy-policy.html">Privacy Policy</a>
+      </nav>
+    </footer>
+  </div>
+
+  <script src="assets/analytics.js"></script>
+  <script>
+    // No backend to post to — validate, then hand off to the thank-you page.
+    // Nothing is transmitted or stored; the fields simply go out of scope.
+    document.getElementById("contactForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const name = document.getElementById("cname").value.trim();
+      const email = document.getElementById("cemail").value.trim();
+      const msg = document.getElementById("cmsg").value.trim();
+      const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+      const err = document.getElementById("formError");
+
+      if (!name || !msg || !emailOk) {
+        err.style.display = "block";
+        (!name ? document.getElementById("cname") : !emailOk ? document.getElementById("cemail")
+              : document.getElementById("cmsg")).focus();
+        return;
+      }
+      err.style.display = "none";
+      window.location.href = "thank-you.html";
+    });
+  </script>
+</body>
+</html>

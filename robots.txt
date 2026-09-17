@@ -1,0 +1,19 @@
+# The Placebo Effect — robots.txt
+# A novelty entertainment app. Crawl freely; nothing here is real anyway.
+
+User-agent: *
+Allow: /
+
+# Internal build artifacts and marketing source files — not pages, no reason to index.
+Disallow: /emails/
+Disallow: /desktop/
+Disallow: /promo.html
+Disallow: /thank-you.html
+Disallow: /404.html
+
+# Stylesheets and scripts stay crawlable — Google needs them to render the pages
+# correctly when judging layout and mobile-friendliness.
+Allow: /assets/
+
+# If you move this to a custom domain, update the URL below to match.
+Sitemap: https://matthew-6741.github.io/placebo-effect/sitemap.xml

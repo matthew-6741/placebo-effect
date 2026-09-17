@@ -99,7 +99,13 @@ generates store-ready iOS/Android/Windows packages for you.
       intro-overlay heading, `apple-mobile-web-app-title` meta, and `manifest.webmanifest`
       (`name` + `short_name`). (Icon is a generic ghost, so it needs no text change.)
 - [ ] **Disclose data use** (Apple privacy labels + Google Data Safety): no data collected;
-      Calendar access optional/user-initiated; no analytics; no accounts.
+      Calendar access optional/user-initiated; no accounts.
+      **Analytics depends on how you ship it.** `assets/analytics.js` is scaffolding for
+      Google Analytics 4 and is **inert while `GA_MEASUREMENT_ID` is an empty string** — no
+      Google script loads and nothing is sent. Leave it empty and you can still answer
+      "no data collected". If you ever fill that ID in, you must go back and declare
+      **Analytics / Usage Data** and **Identifiers** on both forms, and the app becomes
+      subject to Apple's App Tracking Transparency questions. Decide before you submit.
 - [ ] Generate **app icons** (1024², plus all sizes) and **store screenshots**.
 - [ ] Set an appropriate **age rating**, and keep the listing wording as a *novelty/parody*
       app (don't compare it to real delivery brands).

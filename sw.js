@@ -1,11 +1,16 @@
 // Phantom service worker — caches the app shell so it opens offline.
 // (Remote photos from LoremFlickr fall back to emoji tiles when offline.)
-const CACHE = "phantom-v18"; // bump this whenever index.html changes
+const CACHE = "phantom-v20"; // bump this whenever index.html changes
 const ASSETS = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
   "./privacy-policy.html",
+  "./contact.html",
+  "./thank-you.html",
+  "./404.html",
+  "./assets/page.css",
+  "./assets/analytics.js",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
   "./icons/icon-180.png",

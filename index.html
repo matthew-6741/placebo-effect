@@ -4,6 +4,19 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>The Placebo Effect — order the dopamine, skip the delivery</title>
+<meta name="description" content="A novelty app where you order food, rides, and flights that never arrive. No fees, no calories, no delivery — 100% placebo." />
+<link rel="canonical" href="https://matthew-6741.github.io/placebo-effect/" />
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "The Placebo Effect",
+  "applicationCategory": "EntertainmentApplication",
+  "operatingSystem": "Any",
+  "description": "A novelty entertainment app: order food, rides, and trips that are never delivered. Nothing is real and nothing is ever charged.",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+}
+</script>
 <!-- Google Identity Services (only used if you set GOOGLE_CLIENT_ID in the script below) -->
 <script src="https://accounts.google.com/gsi/client" async></script>
 <!-- PWA / installable + offline (helps clear "minimum functionality" review) -->
@@ -105,6 +118,15 @@
     cursor: pointer; transition: .2s; font-family: inherit;
   }
   .tabs button.active { background: var(--accent); color: #fff; box-shadow: 0 6px 16px var(--glow); }
+
+  /* breadcrumbs — reflects the actual tab / market / filter state */
+  .crumbs { font-size: 12.5px; color: var(--muted); margin: -8px 2px 16px; }
+  .crumbs ol { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; }
+  .crumbs li { display: flex; align-items: center; gap: 6px; }
+  .crumbs li + li::before { content: "›"; color: var(--line); }
+  .crumbs a { color: var(--muted); text-decoration: none; cursor: pointer; }
+  .crumbs a:hover { color: var(--accent); text-decoration: underline; }
+  .crumbs [aria-current="page"] { color: var(--text); font-weight: 600; }
 
   .view { display: none; animation: fade .35s ease; }
   .view.active { display: block; }
@@ -471,6 +493,8 @@
     <button data-tab="travel">🌍 Travel</button>
   </div>
 
+  <nav class="crumbs" id="crumbs" aria-label="Breadcrumb"></nav>
+
   <!-- EATS -->
   <section class="view active" id="eats">
     <div class="market-bar">
@@ -621,7 +645,11 @@
   <footer>
     The Placebo Effect is a novelty entertainment app — 100% placebo. No food is cooked, no driver is dispatched, no money moves.<br/>
     100% of orders are ghosted. That's the feature, not the bug.<br/>
-    <a href="privacy-policy.html" style="color:var(--accent);font-weight:600">Privacy Policy</a>
+    Parts of this site and app were built with AI assistance — <a href="privacy-policy.html#ai" style="color:var(--accent);font-weight:600">details here</a>.
+    <span style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-top:8px">
+      <a href="contact.html" style="color:var(--accent);font-weight:600">Contact &amp; Directions</a>
+      <a href="privacy-policy.html" style="color:var(--accent);font-weight:600">Privacy Policy</a>
+    </span>
   </footer>
 </div>
 
@@ -1151,6 +1179,7 @@ function renderMenu() {
       host.appendChild(dishGrid(c.dishes, factor, c.name));
     });
   });
+  updateBreadcrumbs(); // market + cuisine-filter changes both land here
 }
 
 document.querySelectorAll(".market-toggle button").forEach(b => b.onclick = () => {
@@ -1216,6 +1245,52 @@ function switchTab(name) {
   document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("active", x.dataset.tab === name));
   document.querySelectorAll(".view").forEach(x => x.classList.toggle("active", x.id === name));
   if (name === "squad") renderTiers();
+  updateBreadcrumbs();
+}
+
+/* ---------- breadcrumbs ----------
+   Mirrors the real state (tab → market → active filter / destination) rather than
+   being decorative, and each level above the current one navigates back up to it. */
+function updateBreadcrumbs() {
+  // Declared inside so early callers (renderMenu runs during init) can't hit a
+  // temporal-dead-zone error on a top-level const.
+  const TAB_LABELS = { eats: "Phantom Eats", ride: "Phantom Ride", wallet: "Wallet", squad: "Squad", travel: "Travel" };
+  const host = document.getElementById("crumbs");
+  if (!host) return;
+  const tab = document.querySelector(".tabs button.active")?.dataset.tab || "eats";
+
+  const resetEats = () => { activeCat = "all"; renderCats(); renderMenu(); };
+  const items = [{ label: "Home", go: () => { switchTab("eats"); resetEats(); } }];
+  items.push({ label: TAB_LABELS[tab] || tab, go: tab === "eats" ? resetEats : null });
+
+  if (tab === "eats") {
+    items.push({ label: `${MARKETS[market].emoji} ${market}` });
+    if (activeCat && activeCat !== "all") {
+      items.push({ label: activeCat === "local" ? `${market} Classics` : activeCat });
+    }
+  } else if (tab === "travel" && DEST[selTravel]) {
+    items.push({ label: `${DEST[selTravel].emoji} ${DEST[selTravel].city}` });
+  }
+
+  const ol = document.createElement("ol");
+  items.forEach((it, i) => {
+    const li = document.createElement("li");
+    const isLast = i === items.length - 1;
+    if (isLast || !it.go) {
+      const span = document.createElement("span");
+      span.textContent = it.label;
+      if (isLast) span.setAttribute("aria-current", "page");
+      li.appendChild(span);
+    } else {
+      const a = document.createElement("a");
+      a.href = "#";
+      a.textContent = it.label;
+      a.addEventListener("click", (e) => { e.preventDefault(); it.go(); });
+      li.appendChild(a);
+    }
+    ol.appendChild(li);
+  });
+  host.replaceChildren(ol);
 }
 document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => switchTab(b.dataset.tab));
 
@@ -1673,6 +1748,7 @@ function selectDest(i) {
   const m = document.getElementById("planeMotion");
   if (m && m.beginElement) { try { m.beginElement(); } catch (e) {} }
   renderTripCard(d);
+  updateBreadcrumbs();
 }
 
 function renderTripCard(d) {
@@ -2129,5 +2205,6 @@ function confettiBurst() {
   }
 }
 </script>
+<script src="assets/analytics.js"></script>
 </body>
 </html>
